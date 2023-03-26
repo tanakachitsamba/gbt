@@ -1,0 +1,18 @@
+
+<html>
+   <body>
+
+      <h1>Input Text - API Interface</h1>
+      <form action = "/action_page" method = "get">
+         Enter Long Text:<br>
+         <textarea rows = "10" cols = "70" name = "message">
+            {{.UserInput}}
+   		</textarea><br>
+         <input type = "submit" value = "Submit">
+      </form>
+
+      <h2>API Response</h2> 
+      <p>{{.BotResponse}}</p>
+
+   </body>
+</html>
