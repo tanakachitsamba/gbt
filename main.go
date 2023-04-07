@@ -18,11 +18,11 @@ func main() {
 
 	i := interpreter("what is the best way to make a pizza?")
 	//log.Println(i)
-	x := getAnswer(i, true)
+	x := getAnswer(i)
 	log.Println(x)
 }
 
-func getAnswer(prompt string, fast bool) string {
+func getAnswer(prompt string) string {
 	// Get the OpenAI API key from the .env file
 	if err := godotenv.Load(); err != nil {
 		log.Println("error loading .env file:", err)
@@ -34,24 +34,14 @@ func getAnswer(prompt string, fast bool) string {
 		botResponse string
 		err         error
 	)
+	_ = err
 
-	if fast {
-		botResponse, err = getStreamResponse(prompt, g)
-		if err != nil {
-			log.Println("error getting bot response:", err)
-		}
-	} else {
-		botResponse, err = getChatStreamResponse(prompt, g)
-		if err != nil {
-			log.Println("error getting bot response:", err)
-		}
-	}
-
+	botResponse, err = getChatStreamResponse(prompt, g, 250)
 	return botResponse
 
 }
 
-func getChatStreamResponse(prompt string, g *gogpt.Client) (string, error) {
+func getChatStreamResponse(prompt string, g *gogpt.Client, maxTokens int) (string, error) {
 	request := gogpt.ChatCompletionRequest{
 		Model: "gpt-3.5-turbo",
 		Messages: []gogpt.ChatCompletionMessage{
@@ -60,11 +50,11 @@ func getChatStreamResponse(prompt string, g *gogpt.Client) (string, error) {
 				Content: prompt,
 			},
 		},
-		MaxTokens:       150,
+		MaxTokens:       maxTokens,
 		Temperature:     0,
 		TopP:            1,
 		PresencePenalty: 0.6,
-		Stop:            []string{"human:", "ai:"},
+		Stop:            []string{"tanaka:", "enquirer:", "reflector:", "prioritiser:", "planner:", "lister:", "decider:", "policy-decider:", "criticiser:", "recaller:`"},
 	}
 
 	stream, err := g.CreateChatCompletionStream(context.Background(), request)
