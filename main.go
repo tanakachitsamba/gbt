@@ -54,7 +54,7 @@ func getChatStreamResponse(prompt string, g *gogpt.Client, maxTokens int) (strin
 		Temperature:     0,
 		TopP:            1,
 		PresencePenalty: 0.6,
-		Stop:            []string{"tanaka:", "enquirer:", "reflector:", "prioritiser:", "planner:", "lister:", "decider:", "policy-decider:", "criticiser:", "recaller:`"},
+		Stop:            []string{"tanaka:", "enquirer:", "reflector:", "prioritiser:", "planner:", "lister:", "decider:", "policy-decider:", "criticiser:", "recaller:", "tokensniffer:", "host:"},
 	}
 
 	stream, err := g.CreateChatCompletionStream(context.Background(), request)
