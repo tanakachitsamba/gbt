@@ -16,10 +16,13 @@ func main() {
 		log.Println("error loading .env file:", err)
 	}
 
-	i := interpreter("what is the best way to make a pizza?")
+	//i := interpreter("what is the best way to make a pizza?")
 	//log.Println(i)
-	x := getResponse(i)
-	log.Println(x)
+	//x := getResponse(i)
+	//log.Println(x)
+
+	res := runPolicies()
+	_ = res
 }
 
 func getResponse(prompt string) string {
