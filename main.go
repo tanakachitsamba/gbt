@@ -18,11 +18,11 @@ func main() {
 
 	i := interpreter("what is the best way to make a pizza?")
 	//log.Println(i)
-	x := getAnswer(i)
+	x := getResponse(i)
 	log.Println(x)
 }
 
-func getAnswer(prompt string) string {
+func getResponse(prompt string) string {
 	// Get the OpenAI API key from the .env file
 	if err := godotenv.Load(); err != nil {
 		log.Println("error loading .env file:", err)

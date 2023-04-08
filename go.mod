@@ -1,10 +1,8 @@
 module test
 
-go 1.19
-
-require github.com/sashabaranov/go-gpt3 v1.3.3
+go 1.20
 
 require (
-	github.com/joho/godotenv v1.5.1 // indirect
-	github.com/sashabaranov/go-openai v1.5.7 // indirect
+	github.com/joho/godotenv v1.5.1
+	github.com/sashabaranov/go-gpt3 v1.4.0
 )
