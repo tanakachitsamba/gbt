@@ -38,30 +38,36 @@ func policyDeciderPrompt(conversationHistory string) string {
 }
 
 var policies = []Policies{
-	{agent: "tanaka:", policyString: "policy-decider: 1", prompt: ""},
-	{agent: "summariser:", policyString: "policy-decider: 2", prompt: ""},
-	{agent: "criticiser:", policyString: "policy-decider: 3", prompt: ""},
-	{agent: "enquirer:", policyString: "policy-decider: 4", prompt: ""},
-	{agent: "prioritiser:", policyString: "policy-decider: 5", prompt: ""},
-	{agent: "planner:", policyString: "policy-decider: 6", prompt: ""},
-	{agent: "lister:", policyString: "policy-decider: 7", prompt: ""},
-	{agent: "decider:", policyString: "policy-decider: 8", prompt: ""},
-	{agent: "host:", policyString: "policy-decider: 9", prompt: ""},
+	{agent: "summariser:", prompt: ``},
+	{agent: "criticiser:", prompt: ``},
+	{agent: "enquirer:", prompt: ``},
+	{agent: "prioritiser:", prompt: ``},
+	{agent: "planner:", prompt: ``},
+	{agent: "lister:", prompt: ``},
+	{agent: "decider:", prompt: ``},
+	{agent: "executor:", prompt: ``},
 }
 
-func runPolicies() string {
+func runPolicies(instruction string) string {
 	var response string
-	var task string = "Create a policy for doing research on the topic of the task."
+	//var nexttask string = `create a report on how this agent could useful.`
+
+	//var waitingForResponse bool
 Loop:
 	for {
 		for idx, i := range policies {
 			switch {
-			case idx == 0:
+			case idx == 2:
+				/*
+					todo: enquier agent needs to be created to ask the user for the task
+									response = getResponse(i.prompt + response)
+					if filterString(response, "enquirer:") {
+					}
+				*/
+
 				continue
-			case idx == 1:
-				var x = i.prompt + `here is the task: ` + task
-				response = getResponse(x)
-			case idx == 8:
+			case idx == 7:
+				response = getResponse(i.prompt + response)
 				break Loop
 			default:
 				response = getResponse(i.prompt + response)

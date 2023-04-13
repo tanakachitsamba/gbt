@@ -21,8 +21,11 @@ func main() {
 	//x := getResponse(i)
 	//log.Println(x)
 
-	res := runPolicies()
+	instruct := `create a report on how this agent could be useful.`
+	res := runPolicies(instruct)
 	_ = res
+
+	log.Println(res)
 }
 
 func getResponse(prompt string) string {
