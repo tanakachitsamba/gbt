@@ -53,10 +53,18 @@ func runPolicies(instruction string) string {
 	//var nexttask string = `create a report on how this agent could useful.`
 
 	//var waitingForResponse bool
+	var conversationThreads []ConversationThread = make([]ConversationThread, 0)
 Loop:
 	for {
+		var conversationThread ConversationThread
 		for idx, i := range policies {
 			switch {
+			case idx == 0:
+				response = getResponse(i.prompt + instruction)
+				conversationThread.conversation += i.prompt + instruction + response
+			case idx == 1:
+				response = getResponse(i.prompt + response)
+				conversationThread.conversation += i.prompt + response
 			case idx == 2:
 				/*
 					todo: enquier agent needs to be created to ask the user for the task
@@ -64,18 +72,34 @@ Loop:
 					if filterString(response, "enquirer:") {
 					}
 				*/
-
 				continue
+			case idx == 3:
+				response = getResponse(i.prompt + response)
+				conversationThread.conversation += i.prompt + response
+			case idx == 4:
+				response = getResponse(i.prompt + response)
+				conversationThread.conversation += i.prompt + response
+			case idx == 5:
+				response = getResponse(i.prompt + response)
+				conversationThread.conversation += i.prompt + response
+			case idx == 6:
+				response = getResponse(i.prompt + response)
+				conversationThread.conversation += i.prompt + response
 			case idx == 7:
 				response = getResponse(i.prompt + response)
+				conversationThread.conversation += i.prompt + response
+				conversationThreads = append(conversationThreads, conversationThread)
 				break Loop
-			default:
-				response = getResponse(i.prompt + response)
 			}
 		}
 	}
+	_ = conversationThreads
 
 	return response
+}
+
+type ConversationThread struct {
+	conversation string
 }
 
 type Policies struct {
