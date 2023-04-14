@@ -15,7 +15,7 @@ var policies = []Policies{
 	{agent: "executor:", prompt: ``},
 }
 
-func runPolicies(instruction string, ifblocked bool) string {
+func runPolicies(instruction string, ifBlockedTask bool) string {
 	var response string
 	//var nexttask string = `create a report on how this agent could useful.`
 
@@ -30,7 +30,7 @@ Loop:
 			qoutes                 string
 			ifPreviousConversation bool
 		)
-		if ifblocked {
+		if ifBlockedTask {
 			// this needs to be batched to multiple goroutines to speed up the process
 			for _, x := range conversationThreads {
 				var input string = `Does this conversation have an answer to this following query: "` + instruction + `". Answer with a "Yes" or "No" or If you don't know just say I don't know. Here is the conversation: ` + x.conversation
