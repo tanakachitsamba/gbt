@@ -4,7 +4,8 @@ import "strings"
 
 //every agent when ran runs with a recaller agent (except the agent that is ran at the step 1) to analyse the conversation history for the answer, the agent that handles the task and then the criticiser agent which is then recursively fed back to the thread of the agent that is handling the task to return the final answer of the task to the next agent.
 
-var policies = []Policies{
+// this is the general task agent policy, others will need to be created.
+var policy = []Policy{
 	{agent: "summariser:", prompt: ``},
 	{agent: "criticiser:", prompt: ``},
 	{agent: "enquirer:", prompt: ``},
@@ -43,7 +44,7 @@ Loop:
 				}
 			}
 		}
-		for idx, i := range policies {
+		for idx, i := range policy {
 			switch {
 			case idx == 0:
 				var previousConversation = func(ifPreviousConversation bool) string {
@@ -95,7 +96,7 @@ type ConversationThread struct {
 	conversation string
 }
 
-type Policies struct {
+type Policy struct {
 	agent, policyString, prompt string
 }
 
