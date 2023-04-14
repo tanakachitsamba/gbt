@@ -31,6 +31,8 @@ Loop:
 			qoutes                 string
 			ifPreviousConversation bool
 		)
+
+		// this looks for tasks that are blocked to see if the conversation history has an answer to the blocked task
 		if ifBlockedTask {
 			// this needs to be batched to multiple goroutines to speed up the process
 			for _, x := range conversationThreads {
