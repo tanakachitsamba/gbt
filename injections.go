@@ -117,3 +117,11 @@ func expector(responseOutput string) {
 	res := getResponse(prompt)
 	_ = res
 }
+
+func countChars(s string) int {
+	count := 0
+	for range s {
+		count++
+	}
+	return count
+}
