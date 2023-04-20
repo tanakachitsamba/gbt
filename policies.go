@@ -78,7 +78,10 @@ Loop:
 					var instruction1 string = `Read the conversation below and Summarise all the relevant information that relates to answering this query: "` + instruction + `". Here is the conversation: ` + x.conversation
 					var instruction2 string = `Read the conversation below and note all qoutes verbatim that relate to answering this query: ` + instruction + `". Here is the conversation: ` + x.conversation
 					summary = handlingCritic(instruction1)
+					summary = "Here is the summaries of the previous conversation history: " + summary
 					qoutes = handlingCritic(instruction2)
+					qoutes = "Here is the qoutes of the previous conversation history: " + qoutes
+
 					break
 				}
 			}
@@ -90,7 +93,7 @@ Loop:
 					if !ifPreviousConversation {
 						return ``
 					}
-					return `Here is the summaries and qoutes of the previous conversation history: ` + summary + qoutes
+					return summary + qoutes
 				}
 
 				response = handlingCritic(i.prompt + instruction + previousConversation(ifPreviousConversation))
