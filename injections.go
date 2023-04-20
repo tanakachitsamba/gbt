@@ -16,7 +16,16 @@ var policy = []Policy{
 	{agent: "executor:", prompt: ``},
 }
 
-func runPolicies(instruction string, ifBlockedTask bool) string {
+func handlingCritic(prompt string) string {
+	var answer string = getResponse(prompt)
+	var criticPrompt string = policy[1].prompt + answer
+	var critic string = getResponse(criticPrompt)
+	var lastPass string = getResponse(criticPrompt + critic)
+	return lastPass
+}
+
+// todo: certain protocols need to be saved so when used their memories can be loaded
+func runPolicies(instruction string, loadMemory bool) string {
 	var response string
 	//var nexttask string = `create a report on how this agent could useful.`
 
@@ -33,15 +42,18 @@ Loop:
 		)
 
 		// this looks for tasks that are blocked to see if the conversation history has an answer to the blocked task
-		if ifBlockedTask {
+		if loadMemory {
 			// this needs to be batched to multiple goroutines to speed up the process
 			for _, x := range conversationThreads {
 				var input string = `Does this conversation have an answer to this following query: "` + instruction + `". Answer with a "Yes" or "No" or If you don't know just say I don't know. Here is the conversation: ` + x.conversation
-				response = getResponse(input)
+				response = handlingCritic(input)
 				if filterString(response, "yes") {
 					ifPreviousConversation = true
-					summary = getResponse(`Read the conversation below and Summarise all the relevant information that relates to answering this query: "` + instruction + `". Here is the conversation: ` + x.conversation)
-					qoutes = getResponse(`Read the conversation below and note all qoutes verbatim that relate to answering this query: ` + instruction + `". Here is the conversation: ` + x.conversation)
+
+					var instruction1 string = `Read the conversation below and Summarise all the relevant information that relates to answering this query: "` + instruction + `". Here is the conversation: ` + x.conversation
+					var instruction2 string = `Read the conversation below and note all qoutes verbatim that relate to answering this query: ` + instruction + `". Here is the conversation: ` + x.conversation
+					summary = handlingCritic(instruction1)
+					qoutes = handlingCritic(instruction2)
 					break
 				}
 			}
@@ -56,10 +68,10 @@ Loop:
 					return `Here is the summaries and qoutes of the previous conversation history: ` + summary + qoutes
 				}
 
-				response = getResponse(i.prompt + instruction + previousConversation(ifPreviousConversation))
+				response = handlingCritic(i.prompt + instruction + previousConversation(ifPreviousConversation))
 				conversationThread.conversation += i.prompt + instruction + previousConversation(ifPreviousConversation) + response
 			case idx == 1:
-				response = getResponse(i.prompt + response)
+				response = handlingCritic(i.prompt + response)
 				conversationThread.conversation += i.prompt + response
 			case idx == 2:
 				/*
@@ -70,19 +82,19 @@ Loop:
 				*/
 				continue
 			case idx == 3:
-				response = getResponse(i.prompt + response)
+				response = handlingCritic(i.prompt + response)
 				conversationThread.conversation += i.prompt + response
 			case idx == 4:
-				response = getResponse(i.prompt + response)
+				response = handlingCritic(i.prompt + response)
 				conversationThread.conversation += i.prompt + response
 			case idx == 5:
-				response = getResponse(i.prompt + response)
+				response = handlingCritic(i.prompt + response)
 				conversationThread.conversation += i.prompt + response
 			case idx == 6:
-				response = getResponse(i.prompt + response)
+				response = handlingCritic(i.prompt + response)
 				conversationThread.conversation += i.prompt + response
 			case idx == 7:
-				response = getResponse(i.prompt + response)
+				response = handlingCritic(i.prompt + response)
 				conversationThread.conversation += i.prompt + response
 				conversationThreads = append(conversationThreads, conversationThread)
 				break Loop
