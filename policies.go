@@ -49,6 +49,8 @@ Provide emotional support and guidance to users in distress.`
 	return protocols
 }
 
+type RunPolicies func(string, bool) string
+
 // todo: certain protocols need to be saved so when used their memories can be loaded
 func runPolicies(instruction string, loadMemory bool) string {
 	var response string
@@ -57,6 +59,7 @@ func runPolicies(instruction string, loadMemory bool) string {
 	//var waitingForResponse bool
 	// todo: this needs to be a db for backing up the conversation history
 	var conversationThreads []ConversationThread = make([]ConversationThread, 0)
+
 Loop:
 	for {
 		var (

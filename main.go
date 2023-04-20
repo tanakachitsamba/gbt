@@ -21,8 +21,38 @@ func main() {
 	//x := getResponse(i)
 	//log.Println(x)
 
-	instruct := `create a report on how this agent could be useful.`
-	res := runPolicies(instruct, bool(true))
+	instruct := `Provide a message for encouragement to create a positive state of mind or feeling of better well-being.`
+	plugin := `**&timer: every other day at 9:20`
+
+	p := instruct + plugin
+
+	var f = func(s string) string {
+
+		// this should be in a looped map
+		if filterString(s, "**&timer:") {
+			// run the plugin
+
+		}
+
+		return s
+	}
+
+	var k = func(s string) string {
+
+		if filterString(s, "**&") {
+			// remove the plugin key from the string and what ever text is joining it
+		}
+
+		return s
+	}
+
+	redactedInstruct := k(p)
+	runPlugins := f(p)
+	res := runPolicies(redactedInstruct, bool(true))
+
+	// handling the preprogrammed plugins
+	// todo: map should be used to store all the plugin keys such as **&timer:
+
 	_ = res
 
 	log.Println(res)
@@ -37,7 +67,9 @@ func getResponse(prompt string) string {
 		log.Println("error loading .env file:", err)
 	}
 
-	g := gogpt.NewClient(os.Getenv("OPENAI_KEY"))
+	var key string = os.Getenv("OPENAI_KEY")
+
+	g := gogpt.NewClient(key)
 
 	var (
 		botResponse string
