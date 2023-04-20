@@ -17,10 +17,10 @@ var policy = []Policy{
 }
 
 func handlingCritic(prompt string) string {
-	var answer string = getResponse(prompt)
+	var answer string = getResponse(prompt, 0)
 	var criticPrompt string = policy[1].prompt + answer
-	var critic string = getResponse(criticPrompt)
-	var lastPass string = getResponse(criticPrompt + critic)
+	var critic string = getResponse(criticPrompt, 0.7)
+	var lastPass string = getResponse(criticPrompt+critic, 0)
 	return lastPass
 }
 
@@ -75,7 +75,7 @@ Loop:
 			for _, x := range conversationThreads {
 				var input string = `Does this conversation have an answer to this following query: "` + instruction + `". Answer with a "Yes" or "No" or If you don't know just say I don't know. Here is the conversation: ` + x.conversation
 				response = handlingCritic(input)
-				if filterString(response, "yes") {
+				if filterString(response, "Yes") {
 					ifPreviousConversation = true
 
 					var instruction1 string = `Read the conversation below and Summarise all the relevant information that relates to answering this query: "` + instruction + `". Here is the conversation: ` + x.conversation

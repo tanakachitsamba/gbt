@@ -37,6 +37,7 @@ func main() {
 		return s
 	}
 
+	// returns the string without the plugin key
 	var k = func(s string) string {
 
 		if filterString(s, "**&") {
@@ -46,9 +47,8 @@ func main() {
 		return s
 	}
 
-	redactedInstruct := k(p)
 	runPlugins := f(p)
-	res := runPolicies(redactedInstruct, bool(true))
+	res := runPolicies(k(p), bool(true))
 
 	// handling the preprogrammed plugins
 	// todo: map should be used to store all the plugin keys such as **&timer:
@@ -61,7 +61,7 @@ func main() {
 	//sendSMS(os.Getenv("TWILIO_PHONE_FROM"), os.Getenv("TWILIO_PHONE_TO"), quote)
 }
 
-func getResponse(prompt string) string {
+func getResponse(prompt string, temperature float32) string {
 	// Get the OpenAI API key from the .env file
 	if err := godotenv.Load(); err != nil {
 		log.Println("error loading .env file:", err)
@@ -77,12 +77,12 @@ func getResponse(prompt string) string {
 	)
 	_ = err
 
-	botResponse, err = getChatStreamResponse(prompt, g, 250)
+	botResponse, err = getChatStreamResponse(prompt, g, 250, temperature)
 	return botResponse
 
 }
 
-func getChatStreamResponse(prompt string, g *gogpt.Client, maxTokens int) (string, error) {
+func getChatStreamResponse(prompt string, g *gogpt.Client, maxTokens int, temperature float32) (string, error) {
 	request := gogpt.ChatCompletionRequest{
 		Model: "gpt-3.5-turbo",
 		Messages: []gogpt.ChatCompletionMessage{
@@ -92,7 +92,7 @@ func getChatStreamResponse(prompt string, g *gogpt.Client, maxTokens int) (strin
 			},
 		},
 		MaxTokens:       maxTokens,
-		Temperature:     0,
+		Temperature:     temperature,
 		TopP:            1,
 		PresencePenalty: 0.6,
 		Stop:            []string{"tanaka:", "enquirer:", "reflector:", "prioritiser:", "planner:", "lister:", "decider:", "policy-decider:", "criticiser:", "recaller:", "tokensniffer:", "host:"},
