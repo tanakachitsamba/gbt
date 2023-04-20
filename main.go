@@ -2,12 +2,16 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"os"
 	"strings"
 
 	"github.com/joho/godotenv"
 	gogpt "github.com/sashabaranov/go-gpt3"
+	"github.com/twilio/twilio-go"
+
+	api "github.com/twilio/twilio-go/rest/api/v2010"
 )
 
 func main() {
@@ -26,6 +30,28 @@ func main() {
 	_ = res
 
 	log.Println(res)
+
+	//sendSMS(os.Getenv("TWILIO_PHONE_FROM"), os.Getenv("TWILIO_PHONE_TO"), quote)
+}
+
+func sendSMS(from, to, message string) {
+	client := twilio.NewRestClient()
+
+	params := &api.CreateMessageParams{}
+	params.SetBody(message)
+	params.SetFrom(from)
+	params.SetTo(to)
+
+	resp, err := client.Api.CreateMessage(params)
+	if err != nil {
+		fmt.Println("Error sending SMS:", err.Error())
+	} else {
+		if resp.Sid != nil {
+			fmt.Println("SMS sent with SID:", *resp.Sid)
+		} else {
+			fmt.Println("SMS sent with SID:", resp.Sid)
+		}
+	}
 }
 
 func getResponse(prompt string) string {
