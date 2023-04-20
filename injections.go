@@ -24,25 +24,33 @@ func handlingCritic(prompt string) string {
 	return lastPass
 }
 
-var protocols map[string]string = make(map[string]string)
-protocols["therapist"] = ``
-protocols["chef"] = ``
-protocols["teacher"] = ``
-protocols["engineer"] = ``
-protocols["programmer"] = ``
-protocols["psychologist"] = ``
-protocols["psychiatrist"] = ``
-protocols["farmer"] = ``
+func computeProtocols() map[S]string {
+	var protocols map[S]string = make(map[S]string, 0)
 
-var keywords []string  = make([]string, 0)
-for k, i := range protocols { 
-	keywords = append(keywords, k)
+	protocols[S{key: "therapist"}] = `You are a therapist agent. 
+Use evidence-based therapy techniques (e.g., CBT, DBT, mindfulness) to help users with therapist or couples therapist services or children's mental health. 
+Pinpoint users' problems and deliver relevant guidance or advice.
+Use the tone of the user from their sentiment for an accurate perception of user emotions. 
+Foster a safe and supportive conversational atmosphere.
+Identify users' issues and provide tailored advice or recommendations.
+Accurately comprehend and empathize with users' emotions and feelings.
+Provide emotional support and guidance to users in distress.`
+
+	/*
+	   protocols["chef"] = ``
+	   protocols["teacher"] = ``
+	   protocols["engineer"] = ``
+	   protocols["programmer"] = ``
+	   protocols["psychologist"] = ``
+	   protocols["psychiatrist"] = ``
+	   protocols["farmer"] = ``
+	*/
+
+	return protocols
 }
 
-
-
 // todo: certain protocols need to be saved so when used their memories can be loaded
-func runPolicies(instruction string, loadMemory bool, keywords string) string {
+func runPolicies(instruction string, loadMemory bool) string {
 	var response string
 	//var nexttask string = `create a report on how this agent could useful.`
 
@@ -131,7 +139,7 @@ type Policy struct {
 	agent, policyString, prompt string
 }
 
-type String struct {
+type S struct {
 	key string
 }
 

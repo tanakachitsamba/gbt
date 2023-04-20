@@ -22,7 +22,7 @@ func main() {
 	//log.Println(x)
 
 	instruct := `create a report on how this agent could be useful.`
-	res := runPolicies(instruct)
+	res := runPolicies(instruct, bool(true))
 	_ = res
 
 	log.Println(res)
