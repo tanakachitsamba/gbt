@@ -24,8 +24,25 @@ func handlingCritic(prompt string) string {
 	return lastPass
 }
 
+var protocols map[string]string = make(map[string]string)
+protocols["therapist"] = ``
+protocols["chef"] = ``
+protocols["teacher"] = ``
+protocols["engineer"] = ``
+protocols["programmer"] = ``
+protocols["psychologist"] = ``
+protocols["psychiatrist"] = ``
+protocols["farmer"] = ``
+
+var keywords []string  = make([]string, 0)
+for k, i := range protocols { 
+	keywords = append(keywords, k)
+}
+
+
+
 // todo: certain protocols need to be saved so when used their memories can be loaded
-func runPolicies(instruction string, loadMemory bool) string {
+func runPolicies(instruction string, loadMemory bool, keywords string) string {
 	var response string
 	//var nexttask string = `create a report on how this agent could useful.`
 
