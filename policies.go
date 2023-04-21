@@ -16,11 +16,18 @@ var policy = []Policy{
 	{agent: "executor:", prompt: ``},
 }
 
+func fetchExamples(prompt string) string {
+	var examples string
+	return prompt + examples
+}
+
 func handlingCritic(prompt string) string {
-	var answer string = getResponse(prompt, 0)
+	// the first layer is to make sure that examples can be provided for icl fsl/msl
+	var answer string = getResponse(fetchExamples(prompt), 0)
 	var criticPrompt string = policy[1].prompt + answer
-	var critic string = getResponse(criticPrompt, 0.7)
-	var lastPass string = getResponse(criticPrompt+critic, 0)
+
+	var critic string = getResponse(fetchExamples(criticPrompt), 0.7)
+	var lastPass string = getResponse(fetchExamples(criticPrompt+critic), 0)
 	return lastPass
 }
 
@@ -157,7 +164,7 @@ func expector(responseOutput string) {
 
 	var prompt = `You are an agent that checks whether the output is as expected or not. ` + `the output should respond with an integer  or I dont know, if the ouput of the previous agent is not as expected then the current agent will return an error message. Here is an example answer "expectation error: should be an integer or I dont know but recieved something else". eitherwise return with just "passed". ` + "\n" + "here is the output to be reviewed:" + responseOutput
 
-	res := getResponse(prompt)
+	res := getResponse(prompt, 0)
 	_ = res
 }
 
