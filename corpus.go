@@ -8,3 +8,11 @@ package main
 func getCountOfChars(doc1 string) {
 	countChars(doc1)
 }
+
+func countChars(s string) int {
+	count := 0
+	for range s {
+		count++
+	}
+	return count
+}

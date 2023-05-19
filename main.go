@@ -2,66 +2,127 @@ package main
 
 import (
 	"context"
+	"html"
+	"io/ioutil"
 	"log"
 	"os"
 	"strings"
 
 	"github.com/joho/godotenv"
-	gogpt "github.com/sashabaranov/go-gpt3"
+
+	"github.com/sashabaranov/go-openai"
+	//"github.com/joho/godotenv"
+	//gogpt "github.com/sashabaranov/go-gpt3"
 )
 
-func main() {
-	var err error = godotenv.Load(".env")
-	if err != nil {
-		log.Println("error loading .env file:", err)
-	}
-
-	//i := interpreter("what is the best way to make a pizza?")
-	//log.Println(i)
-	//x := getResponse(i)
-	//log.Println(x)
-
-	instruct := `Provide a message for encouragement to create a positive state of mind or feeling of better well-being.`
-	plugin := `**&timer: every other day at 9:20`
-
-	p := instruct + plugin
-
-	var f = func(s string) string {
-
-		// this should be in a looped map
-		if filterString(s, "**&timer:") {
-			// run the plugin
-
-		}
-
-		return s
-	}
-
-	// returns the string without the plugin key
-	var k = func(s string) string {
-
-		if filterString(s, "**&") {
-			// remove the plugin key from the string and what ever text is joining it
-		}
-
-		return s
-	}
-
-	runPlugins := f(p)
-	res := runPolicies(k(p), bool(true))
-
-	// handling the preprogrammed plugins
-	// todo: map should be used to store all the plugin keys such as **&timer:
-
-	_ = res
-
-	log.Println(res)
-
-	// sending sms
-	//sendSMS(os.Getenv("TWILIO_PHONE_FROM"), os.Getenv("TWILIO_PHONE_TO"), quote)
+type Input struct {
+	client        *openai.Client
+	prompt, model string
+	temperature   float32
+	maxTokens     int
 }
 
-func getResponse(prompt string, temperature float32) string {
+type Plugin struct {
+}
+
+func stringToHTML(input string) string {
+	return html.EscapeString(input)
+}
+
+/*
+	/
+
+/ the string to be encoded
+
+	str := "This is an example sentence to try encoding out on!"
+
+	result, err := encode(str)
+	if err != nil {
+		log.Fatalf("Encoding failed: %v", err)
+	}
+
+	// print the encoded string and token count
+	fmt.Printf("Encoded tokens: %v\n", result.Tokens)
+	fmt.Printf("Token count: %d\n", result.Count)
+
+*
+*/
+func main() {
+	client := getClient()
+
+	prompt := "create a basic html landing page about plant growing. only respond with the code\n"
+
+	inp := Input{client: client, prompt: prompt, model: "gpt-4", temperature: 0.7, maxTokens: 4000}
+
+	var (
+		res string
+		err error
+	)
+	res, err = inp.getChatStreamResponse()
+	_ = err
+	_ = inp
+
+	var x string = `<!DOCTYPE html> <html lang="en"> <head> <meta charset="UTF-8"> <meta name="viewport" content="width=device-width, initial-scale=1.0"> <title>Landing Page</title> <style> body { font-family: Arial, sans-serif; text-align: center; background-color: #f0f0f0; } h1 { font-size: 36px; color: #333; } p { font-size: 18px; color: #666; } a { display: inline-block; padding: 10px 20px; background-color: #007bff; color: #fff; text-decoration: none; border-radius: 3px; } a:hover { background-color: #0056b3; } </style> </head> <body> <h1>Welcome to Our Landing Page!</h1> <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nulla vel malesuada mi.</p> <a href="#">Click Here to Continue</a> </body> </html>`
+	_ = x
+
+	ioutil.ReadFile()
+
+	err = ioutil.WriteFile("app.html", []byte(res), 0644)
+	if err != nil {
+		log.Fatalf("Failed writing to file: %s", err)
+	}
+
+	/*
+		//i := interpreter("what is the best way to make a pizza?")
+		//log.Println(i)
+		//x := getResponse(i)
+		//log.Println(x)
+
+		instruct := `Provide a message for encouragement to create a positive state of mind or feeling of better well-being.`
+		plugin := `**&timer: every other day at 9:20`
+
+		p := instruct + plugin
+
+		var f = func(s string) string {
+
+			// this should be in a looped map
+			if filterString(s, "**&timer:") {
+				// run the plugin
+
+			}
+
+			return s
+		}
+
+		// returns the string without the plugin key
+		var k = func(s string) string {
+
+			if String(s, "**&") {
+				// remove the plugin key from the string and what ever text is joining it
+			}
+
+			return s
+		}
+
+		runPlugins := f(p)
+		res := runPolicies(k(p), bool(true))
+
+		// handling the preprogrammed plugins
+		// todo: map should be used to store all the plugin keys such as **&timer:
+
+		_ = res
+
+		log.Println(res)
+
+		// sending sms
+		//sendSMS(os.Getenv("TWILIO_PHONE_FROM"), os.Getenv("TWILIO_PHONE_TO"), quote)
+
+
+	*/
+
+}
+
+func getClient() *openai.Client {
 	// Get the OpenAI API key from the .env file
 	if err := godotenv.Load(); err != nil {
 		log.Println("error loading .env file:", err)
@@ -69,37 +130,29 @@ func getResponse(prompt string, temperature float32) string {
 
 	var key string = os.Getenv("OPENAI_KEY")
 
-	g := gogpt.NewClient(key)
-
-	var (
-		botResponse string
-		err         error
-	)
-	_ = err
-
-	botResponse, err = getChatStreamResponse(prompt, g, 250, temperature)
-	return botResponse
-
+	return openai.NewClient(key)
 }
 
-func getChatStreamResponse(prompt string, g *gogpt.Client, maxTokens int, temperature float32) (string, error) {
-	request := gogpt.ChatCompletionRequest{
-		Model: "gpt-3.5-turbo",
-		Messages: []gogpt.ChatCompletionMessage{
+func (inp Input) getChatStreamResponse() (string, error) {
+	request := openai.ChatCompletionRequest{
+		Model: inp.model,
+		Messages: []openai.ChatCompletionMessage{
 			{
 				Role:    "user",
-				Content: prompt,
+				Content: inp.prompt,
 			},
 		},
-		MaxTokens:       maxTokens,
-		Temperature:     temperature,
+		MaxTokens:       inp.maxTokens,
+		Temperature:     inp.temperature,
 		TopP:            1,
 		PresencePenalty: 0.6,
-		Stop:            []string{"tanaka:", "enquirer:", "reflector:", "prioritiser:", "planner:", "lister:", "decider:", "policy-decider:", "criticiser:", "recaller:", "tokensniffer:", "host:"},
+		Stop:            []string{"agent:", "person:"},
+		//Stop:            []string{"tanaka:", "enquirer:", "reflector:", "prioritiser:", "planner:", "lister:", "decider:", "policy-decider:", "criticiser:", "recaller:", "tokensniffer:", "host:"},
 	}
 
-	stream, err := g.CreateChatCompletionStream(context.Background(), request)
+	stream, err := inp.client.CreateChatCompletionStream(context.Background(), request)
 	if err != nil {
+		log.Println(err, "createchatcompletionstream")
 		return "", err
 	}
 	defer stream.Close()
@@ -108,6 +161,7 @@ func getChatStreamResponse(prompt string, g *gogpt.Client, maxTokens int, temper
 	for {
 		response, err := stream.Recv()
 		if err != nil {
+			log.Println(err, "stream.Recv()")
 			return "", err
 		}
 
@@ -124,8 +178,8 @@ func getChatStreamResponse(prompt string, g *gogpt.Client, maxTokens int, temper
 	return buffer.String(), nil
 }
 
-func getStreamResponse(prompt string, g *gogpt.Client) (string, error) {
-	request := gogpt.CompletionRequest{
+func getStreamResponse(prompt string, g *openai.Client) (string, error) {
+	request := openai.CompletionRequest{
 		Model:     "text-ada-001",
 		MaxTokens: 500,
 		Prompt:    prompt,

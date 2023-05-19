@@ -1,6 +1,6 @@
 package main
 
-import "strings"
+import gogpt "github.com/sashabaranov/go-gpt3"
 
 //every agent when ran runs with a recaller agent (except the agent that is ran at the step 1) to analyse the conversation history for the answer, the agent that handles the task and then the criticiser agent which is then recursively fed back to the thread of the agent that is handling the task to return the final answer of the task to the next agent.
 
@@ -21,13 +21,15 @@ func fetchExamples(prompt string) string {
 	return prompt + examples
 }
 
-func handlingCritic(prompt string) string {
+
+
+func (inp Input) handlingCritic(prompt string, temperature float32, model string) string {
 	// the first layer is to make sure that examples can be provided for icl fsl/msl
-	var answer string = getResponse(fetchExamples(prompt), 0)
+	var answer string = getResponse(fetchExamples(prompt), temperature, model)
 	var criticPrompt string = policy[1].prompt + answer
 
-	var critic string = getResponse(fetchExamples(criticPrompt), 0.7)
-	var lastPass string = getResponse(fetchExamples(criticPrompt+critic), 0)
+	var critic string = getResponse(fetchExamples(criticPrompt), temperature, model) // this parameter needs to selected from hyperparameters
+	var lastPass string = getResponse(fetchExamples(criticPrompt+critic), temperature, model)
 	return lastPass
 }
 
@@ -74,6 +76,9 @@ Loop:
 			summary                string
 			qoutes                 string
 			ifPreviousConversation bool
+
+			temperature float32 = 0.7
+			model       string  = "gbt-4"
 		)
 
 		// this looks for tasks that are blocked to see if the conversation history has an answer to the blocked task
@@ -81,15 +86,19 @@ Loop:
 			// this needs to be batched to multiple goroutines to speed up the process
 			for _, x := range conversationThreads {
 				var input string = `Does this conversation have an answer to this following query: "` + instruction + `". Answer with a "Yes" or "No" or If you don't know just say I don't know. Here is the conversation: ` + x.conversation
-				response = handlingCritic(input)
+				response = handlingCritic(input, temperature, model)
+				// placeholder until it is fixed - no filterString function
+				filterString := func(a, b string) bool {
+					return false
+				}
 				if filterString(response, "Yes") {
 					ifPreviousConversation = true
 
 					var instruction1 string = `Read the conversation below and Summarise all the relevant information that relates to answering this query: "` + instruction + `". Here is the conversation: ` + x.conversation
 					var instruction2 string = `Read the conversation below and note all qoutes verbatim that relate to answering this query: ` + instruction + `". Here is the conversation: ` + x.conversation
-					summary = handlingCritic(instruction1)
+					summary = handlingCritic(instruction1, temperature, model)
 					summary = "Here is the summaries of the previous conversation history: " + summary
-					qoutes = handlingCritic(instruction2)
+					qoutes = handlingCritic(instruction2, temperature, model)
 					qoutes = "Here is the qoutes of the previous conversation history: " + qoutes
 
 					break
@@ -106,10 +115,10 @@ Loop:
 					return summary + qoutes
 				}
 
-				response = handlingCritic(i.prompt + instruction + previousConversation(ifPreviousConversation))
+				response = handlingCritic(i.prompt+instruction+previousConversation(ifPreviousConversation), temperature, model)
 				conversationThread.conversation += i.prompt + instruction + previousConversation(ifPreviousConversation) + response
 			case idx == 1:
-				response = handlingCritic(i.prompt + response)
+				response = handlingCritic(i.prompt+response, temperature, model)
 				conversationThread.conversation += i.prompt + response
 			case idx == 2:
 				/*
@@ -120,19 +129,19 @@ Loop:
 				*/
 				continue
 			case idx == 3:
-				response = handlingCritic(i.prompt + response)
+				response = handlingCritic(i.prompt+response, temperature, model)
 				conversationThread.conversation += i.prompt + response
 			case idx == 4:
-				response = handlingCritic(i.prompt + response)
+				response = handlingCritic(i.prompt+response, temperature, model)
 				conversationThread.conversation += i.prompt + response
 			case idx == 5:
-				response = handlingCritic(i.prompt + response)
+				response = handlingCritic(i.prompt+response, temperature, model)
 				conversationThread.conversation += i.prompt + response
 			case idx == 6:
-				response = handlingCritic(i.prompt + response)
+				response = handlingCritic(i.prompt+response, temperature, model)
 				conversationThread.conversation += i.prompt + response
 			case idx == 7:
-				response = handlingCritic(i.prompt + response)
+				response = handlingCritic(i.prompt+response, temperature, model)
 				conversationThread.conversation += i.prompt + response
 				conversationThreads = append(conversationThreads, conversationThread)
 				break Loop
@@ -156,22 +165,15 @@ type S struct {
 	key string
 }
 
-func filterString(input, query string) bool {
-	return strings.Contains(input, query)
-}
-
 func expector(responseOutput string) {
+	var (
+		temperature float32
+		model       string
+	)
 
 	var prompt = `You are an agent that checks whether the output is as expected or not. ` + `the output should respond with an integer  or I dont know, if the ouput of the previous agent is not as expected then the current agent will return an error message. Here is an example answer "expectation error: should be an integer or I dont know but recieved something else". eitherwise return with just "passed". ` + "\n" + "here is the output to be reviewed:" + responseOutput
 
-	res := getResponse(prompt, 0)
+	res := getResponse(prompt, temperature, model)
 	_ = res
 }
 
-func countChars(s string) int {
-	count := 0
-	for range s {
-		count++
-	}
-	return count
-}
