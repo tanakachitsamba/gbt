@@ -34,4 +34,3 @@ func encode(str string) (EncoderOutput, error) {
 
 	return result, nil
 }
-s

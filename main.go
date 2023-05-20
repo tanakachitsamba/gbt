@@ -2,8 +2,8 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"html"
-	"io/ioutil"
 	"log"
 	"os"
 	"strings"
@@ -43,34 +43,46 @@ func stringToHTML(input string) string {
 
 	// print the encoded string and token count
 	fmt.Printf("Encoded tokens: %v\n", result.Tokens)
-	fmt.Printf("Token count: %d\n", result.Count)
+	fmt.Printf("Token count: %d\n", result.
+)
 
 *
 */
+
 func main() {
 	client := getClient()
 
-	prompt := "create a basic html landing page about plant growing. only respond with the code\n"
+	prompt := "create a html landing page about offering an accounting service to nurses, use tailwind for the css and make the website professional in design standards. only respond with the code\n"
 
-	inp := Input{client: client, prompt: prompt, model: "gpt-4", temperature: 0.7, maxTokens: 4000}
+	/*
+		enc, err := encode(prompt)
+		if err != nil {
+			log.Fatalf("Encoding failed: %v", err)
+		}
+		lenOfInputTokens := enc.Count
+		_ = lenOfInputTokens
+
+	*/
+
+	inp := Input{client: client, prompt: prompt, model: "gpt-4", temperature: 0.9, maxTokens: 7500}
 
 	var (
-		res string
+		str string
 		err error
 	)
-	res, err = inp.getChatStreamResponse()
+	str, err = inp.getChatStreamResponse()
 	_ = err
 	_ = inp
 
-	var x string = `<!DOCTYPE html> <html lang="en"> <head> <meta charset="UTF-8"> <meta name="viewport" content="width=device-width, initial-scale=1.0"> <title>Landing Page</title> <style> body { font-family: Arial, sans-serif; text-align: center; background-color: #f0f0f0; } h1 { font-size: 36px; color: #333; } p { font-size: 18px; color: #666; } a { display: inline-block; padding: 10px 20px; background-color: #007bff; color: #fff; text-decoration: none; border-radius: 3px; } a:hover { background-color: #0056b3; } </style> </head> <body> <h1>Welcome to Our Landing Page!</h1> <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nulla vel malesuada mi.</p> <a href="#">Click Here to Continue</a> </body> </html>`
-	_ = x
+	fileName := "app.html"
 
-	ioutil.ReadFile()
-
-	err = ioutil.WriteFile("app.html", []byte(res), 0644)
+	err = WriteHTMLFile(fileName, str)
 	if err != nil {
-		log.Fatalf("Failed writing to file: %s", err)
+		fmt.Println("Error writing HTML file:", err)
+		return
 	}
+
+	fmt.Printf("HTML file %s written successfully\n", fileName)
 
 	/*
 		//i := interpreter("what is the best way to make a pizza?")
