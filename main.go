@@ -2,8 +2,8 @@ package main
 
 import (
 	"context"
-	"fmt"
 	"html"
+	"io/ioutil"
 	"log"
 	"os"
 	"strings"
@@ -52,7 +52,7 @@ func stringToHTML(input string) string {
 func main() {
 	client := getClient()
 
-	prompt := "create a html landing page about offering an accounting service to nurses, use tailwind for the css and make the website professional in design standards. only respond with the code\n"
+	//rompt := "create a html landing page about offering an accounting service to nurses, use tailwind for the css and make the website professional in design standards. only respond with the code\n"
 
 	/*
 		enc, err := encode(prompt)
@@ -64,25 +64,42 @@ func main() {
 
 	*/
 
-	inp := Input{client: client, prompt: prompt, model: "gpt-4", temperature: 0.9, maxTokens: 7500}
+	prompt, err := ioutil.ReadFile("prompt.txt")
+	if err != nil {
+		log.Fatalf("Error reading file: %v", err)
+		os.Exit(1)
+	}
+
+	// after use old prompt gets stored in history using unique name
+
+	inp := Input{client: client, prompt: string(prompt), model: "gpt-4", temperature: 0.9, maxTokens: 6500}
 
 	var (
 		str string
-		err error
+		//err error
 	)
 	str, err = inp.getChatStreamResponse()
 	_ = err
 	_ = inp
 
-	fileName := "app.html"
-
-	err = WriteHTMLFile(fileName, str)
+	// check if output exist and if it does it gets moved to history under a unique name
+	err = ioutil.WriteFile("output.txt", []byte(str), 0644)
 	if err != nil {
-		fmt.Println("Error writing HTML file:", err)
-		return
+		panic(err)
 	}
 
-	fmt.Printf("HTML file %s written successfully\n", fileName)
+	/*
+			fileName := "app.html"
+
+		err = WriteHTMLFile(fileName, str)
+		if err != nil {
+			fmt.Println("Error writing HTML file:", err)
+			return
+		}
+
+		fmt.Printf("HTML file %s written successfully\n", fileName)
+
+	*/
 
 	/*
 		//i := interpreter("what is the best way to make a pizza?")
@@ -154,6 +171,7 @@ func (inp Input) getChatStreamResponse() (string, error) {
 				Content: inp.prompt,
 			},
 		},
+
 		MaxTokens:       inp.maxTokens,
 		Temperature:     inp.temperature,
 		TopP:            1,
