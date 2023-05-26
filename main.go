@@ -3,12 +3,14 @@ package main
 import (
 	"context"
 	"html"
-	"io/ioutil"
 	"log"
+	"net/http"
 	"os"
 	"strings"
 
+	"github.com/gorilla/mux"
 	"github.com/joho/godotenv"
+	"github.com/rs/cors"
 
 	"github.com/sashabaranov/go-openai"
 	//"github.com/joho/godotenv"
@@ -50,43 +52,24 @@ func stringToHTML(input string) string {
 */
 
 func main() {
-	client := getClient()
+	r := mux.NewRouter()
+	r.HandleFunc("/", handleRequest).Methods("POST")
 
-	//rompt := "create a html landing page about offering an accounting service to nurses, use tailwind for the css and make the website professional in design standards. only respond with the code\n"
+	// Enable CORS
+	corsHandler := cors.Default().Handler(r)
 
+	log.Println("Server listening on port 8080...")
+	log.Fatal(http.ListenAndServe(":8080", corsHandler))
+
+	// this creates files
 	/*
-		enc, err := encode(prompt)
+		// check if output exist and if it does it gets moved to history under a unique name
+		err = ioutil.WriteFile("output.txt", []byte(str), 0644)
 		if err != nil {
-			log.Fatalf("Encoding failed: %v", err)
+			panic(err)
 		}
-		lenOfInputTokens := enc.Count
-		_ = lenOfInputTokens
 
 	*/
-
-	prompt, err := ioutil.ReadFile("prompt.txt")
-	if err != nil {
-		log.Fatalf("Error reading file: %v", err)
-		os.Exit(1)
-	}
-
-	// after use old prompt gets stored in history using unique name
-
-	inp := Input{client: client, prompt: string(prompt), model: "gpt-4", temperature: 0.9, maxTokens: 6500}
-
-	var (
-		str string
-		//err error
-	)
-	str, err = inp.getChatStreamResponse()
-	_ = err
-	_ = inp
-
-	// check if output exist and if it does it gets moved to history under a unique name
-	err = ioutil.WriteFile("output.txt", []byte(str), 0644)
-	if err != nil {
-		panic(err)
-	}
 
 	/*
 			fileName := "app.html"
