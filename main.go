@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"html"
 	"log"
 	"net/http"
 	"os"
@@ -18,17 +17,13 @@ import (
 )
 
 type Input struct {
-	client        *openai.Client
-	prompt, model string
-	temperature   float32
-	maxTokens     int
+	client                       *openai.Client
+	prompt, model, systemMessage string
+	temperature                  float32
+	maxTokens                    int
 }
 
 type Plugin struct {
-}
-
-func stringToHTML(input string) string {
-	return html.EscapeString(input)
 }
 
 /*
@@ -72,13 +67,7 @@ func main() {
 	*/
 
 	/*
-			fileName := "app.html"
 
-		err = WriteHTMLFile(fileName, str)
-		if err != nil {
-			fmt.Println("Error writing HTML file:", err)
-			return
-		}
 
 		fmt.Printf("HTML file %s written successfully\n", fileName)
 
@@ -152,6 +141,10 @@ func (inp Input) getChatStreamResponse() (string, error) {
 			{
 				Role:    "user",
 				Content: inp.prompt,
+			},
+			{
+				Role:    "system",
+				Content: inp.systemMessage,
 			},
 		},
 

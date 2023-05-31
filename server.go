@@ -78,7 +78,7 @@ func processQuery(query string) string {
 
 	//"gpt-3.5-turbo"
 
-	inp := Input{client: client, prompt: query + "\n", model: "gpt-4", temperature: 0.9, maxTokens: 1500}
+	inp := Input{client: client, prompt: query + "\n", model: "gpt-4", temperature: 0.9, maxTokens: 1500, systemMessage: `You are a gardening agent, you do not respond with any response that starts with "As an AI model". Use a friendly tone`}
 
 	var (
 		str string
