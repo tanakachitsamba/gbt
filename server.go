@@ -46,10 +46,14 @@ func handleRequest(w http.ResponseWriter, r *http.Request) {
 	w.Write(respJSON)
 }
 
+func x(prompt string) Input {
+	inp := Input{client: getClient(), prompt: prompt + "\n", model: "gpt-3.5-turbo", temperature: 0.9, maxTokens: 1500, systemMessage: `You are a ardening helper, you do not respond with any response that starts with "As an AI model".  You will only answer questions about gardening, allotmenting and any related topics to do with plant growing. If you recieve a question thats not related to gardening or allotmenting, you will politely decline to answer and respond with "I cannot answer that this question because it's not gardening related".  Use a friendly tone`}
+
+	return inp
+}
+
 func processQuery(query string) string {
 	// Implement your query processing logic here
-
-	client := getClient()
 
 	//prompt := "create a html landing page about offering an accounting service to nurses, use tailwind for the css and make the website professional in design standards. only respond with the code\n"
 
@@ -78,11 +82,10 @@ func processQuery(query string) string {
 
 	//"gpt-3.5-turbo"
 
-	inp := Input{client: client, prompt: query + "\n", model: "gpt-3.5-turbo", temperature: 0.9, maxTokens: 1500, systemMessage: `You are a ardening helper, you do not respond with any response that starts with "As an AI model".  You will only answer questions about gardening, allotmenting and any related topics to do with plant growing. If you recieve a question thats not related to gardening or allotmenting, you will politely decline to answer and respond with "I cannot answer that this question because it's not gardening related".  Use a friendly tone`}
-
 	var (
 		str string
 		err error
+		inp Input = x(query)
 	)
 	str, err = inp.getChatStreamResponse()
 	_ = err
