@@ -1,0 +1,87 @@
+package main
+
+import (
+	"fmt"
+	"html"
+	"io/ioutil"
+	"math/rand"
+	"os"
+	"path/filepath"
+)
+
+func writeFileToDirectory(filename string, content string, directoryPath string) error {
+	// Create the full file path
+	filePath := filepath.Join(directoryPath, filename)
+
+	// Write the content to the file
+	err := ioutil.WriteFile(filePath, []byte(content), 0644)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func fileName() {
+
+}
+
+func x() {
+
+	/*
+
+	 */
+	// check if output exist and if it does it gets moved to history under a unique name
+	err = ioutil.WriteFile(fileName+".go", []byte(str), 0644)
+	if err != nil {
+		panic(err)
+	}
+
+	fileName := "app.html"
+
+	err = WriteHTMLFile(fileName, str)
+	if err != nil {
+		fmt.Println("Error writing HTML file:", err)
+		return
+	}
+}
+
+func stringToHTML(input string) string {
+	return html.EscapeString(input)
+}
+
+func WriteHTMLFile(fileName string, content string) error {
+	// Check if the file already exists
+	if _, err := os.Stat(fileName); err == nil {
+		// Generate a random three-digit number
+		randomNum := generateRandomNumber()
+
+		// Rename the existing file
+		newFileName := fmt.Sprintf("%s.html", randomNum)
+		err := os.Rename(fileName, newFileName)
+		if err != nil {
+			return fmt.Errorf("error renaming file: %w", err)
+		}
+
+		fmt.Printf("Renamed existing file from %s to %s\n", fileName, newFileName)
+	}
+
+	// Write the new file
+	err := ioutil.WriteFile(fileName, []byte(content), 0644)
+	if err != nil {
+		return fmt.Errorf("error writing file: %w", err)
+	}
+
+	return nil
+}
+
+func generateRandomNumber() string {
+	// Generate a random three-digit number
+	randomNum := fmt.Sprintf("%02d", randomInt(0, 99))
+	return randomNum
+}
+
+func randomInt(min, max int) int {
+	// Return a random integer between min and max (inclusive)
+	return min + rand.Intn(max-min+1)
+}

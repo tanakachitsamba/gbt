@@ -28,11 +28,9 @@ func handleRequest(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Process the query (you can implement your logic here)
-	result := processQuery(req.Query)
-
+	// Process the query
 	// Create the response object
-	resp := Response{Result: result}
+	resp := Response{Result: processQuery(req.Query)}
 
 	// Convert the response object to JSON
 	respJSON, err := json.Marshal(resp)
@@ -47,7 +45,9 @@ func handleRequest(w http.ResponseWriter, r *http.Request) {
 }
 
 func getInput(prompt string) Input {
-	inp := Input{client: getClient(), prompt: prompt + "\n", model: "gpt-3.5-turbo", temperature: 0.8, maxTokens: 400, systemMessage: `You are a gardening helper, you do not respond with any response that starts with "As an AI model".  You will only answer questions about gardening, allotmenting and any related topics to do with plant growing. If you recieve a question thats not related to gardening or allotments, you will politely decline to answer and respond with "I cannot answer that this question because it's not gardening related".  Use a friendly tone`}
+	//inp := Input{client: getClient(), prompt: prompt + "\n", model: "gpt-3.5-turbo", temperature: 0.8, maxTokens: 400, systemMessage: `You are a gardening helper, you do not respond with any response that starts with "As an AI model".  You will only answer questions about gardening, allotmenting and any related topics to do with plant growing. If you recieve a question thats not related to gardening or allotments, you will politely decline to answer and respond with "I cannot answer that this question because it's not gardening related".  Use a friendly tone`}
+
+	inp := Input{client: getClient(), prompt: prompt + "\n", model: "gpt-4", temperature: 0.8, maxTokens: 1000, systemMessage: `You are a software development agent, your job is to write high quality non-buggy code`}
 
 	return inp
 }
@@ -83,13 +83,13 @@ func processQuery(query string) string {
 	//"gpt-3.5-turbo"
 
 	var (
-		str string
+		res string
 		err error
 		inp Input = getInput(query)
 	)
-	str, err = inp.getChatStreamResponse()
+	res, err = inp.getChatStreamResponse()
 	_ = err
 	_ = inp
 
-	return str
+	return res
 }
