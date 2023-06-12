@@ -2,9 +2,6 @@ package main
 
 import (
 	"context"
-	"errors"
-	"fmt"
-	"io"
 	"log"
 	"net/http"
 	"os"
@@ -49,46 +46,6 @@ type Plugin struct {
 
 *
 */
-
-func runCompletion() error {
-	apiKey := os.Getenv("OPENAI_API_KEY") // Set your OpenAI API key here
-	if apiKey == "" {
-		return errors.New("Please set your OPENAI_API_KEY environment variable")
-	}
-
-	client := openai.NewClient(apiKey)
-	ctx := context.Background()
-
-	req := openai.CompletionRequest{
-		Model:            "curie-instruct-beta",
-		Prompt:           "Q: can you grow poppies from a flowered poppy plant\n",
-		Temperature:      0.54,
-		MaxTokens:        256,
-		TopP:             1,
-		FrequencyPenalty: 0,
-		PresencePenalty:  0,
-	}
-
-	stream, err := client.CreateCompletionStream(ctx, req)
-	if err != nil {
-		return fmt.Errorf("CompletionStream error: %v", err)
-	}
-	defer stream.Close()
-
-	for {
-		response, err := stream.Recv()
-		if errors.Is(err, io.EOF) {
-			fmt.Println("Stream finished")
-			return nil
-		}
-
-		if err != nil {
-			return fmt.Errorf("Stream error: %v", err)
-		}
-
-		fmt.Printf("Stream response: %v\n", response)
-	}
-}
 
 func main() {
 	r := mux.NewRouter()
