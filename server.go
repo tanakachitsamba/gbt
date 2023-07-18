@@ -34,7 +34,7 @@ func handleRequest(w http.ResponseWriter, r *http.Request) {
 
 	//location := "Nottingham, UK"
 	//manifest := `Don't answer questions that require locations or date/time like this "I'm sorry, as a software development agent, I don't have access to real-time weather and agricultural information.", use the data and time provided and the location provided to answer` + "the date and time is: " + dataAndTime + " and the location is: " + location + `\n`
-	inp := Input{client: getClient(), prompt: req.Query + "\n", model: "gpt-3.5-turbo-0613", temperature: 0.8, maxTokens: 1000, systemMessage: `You are a gardening assistant`}
+	inp := Input{client: getClient(), prompt: req.Query + "\n", model: "gpt-3.5-turbo-0613", temperature: 0.8, maxTokens: 1000, systemMessage: `You are a gardening assistant.Format the response so that it is readable.`}
 
 	res, err := inp.getChatStreamResponse()
 	_ = err
