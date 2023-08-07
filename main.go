@@ -3,13 +3,10 @@ package main
 import (
 	"context"
 	"log"
-	"net/http"
 	"os"
 	"strings"
 
-	"github.com/gorilla/mux"
 	"github.com/joho/godotenv"
-	"github.com/rs/cors"
 
 	"github.com/sashabaranov/go-openai"
 	//"github.com/joho/godotenv"
@@ -48,14 +45,30 @@ type Plugin struct {
 */
 
 func main() {
-	r := mux.NewRouter()
-	r.HandleFunc("/", handleRequest).Methods("POST")
 
-	// Enable CORS
-	corsHandler := cors.Default().Handler(r)
+	/*
 
-	log.Println("Server listening on port 8080...")
-	log.Fatal(http.ListenAndServe(":8080", corsHandler))
+			r := mux.NewRouter()
+		r.HandleFunc("/", handleRequest).Methods("POST")
+
+		// Enable CORS
+		corsHandler := cors.Default().Handler(r)
+
+		log.Println("Server listening on port 8080...")
+		log.Fatal(http.ListenAndServe(":8080", corsHandler))
+
+	*/
+
+	inp := Input{client: getClient(), prompt: "Create questions for a job interview for a financial accounts manager in the uk" + "\n", model: "gpt-3.5-turbo-0613", temperature: 0.8, maxTokens: 1000, systemMessage: `Don't make assumptions about what values to plug into functions. Ask for clarification if a user request is ambiguous`}
+
+	_, err, thing := inp.getChatStreamResponse()
+	_ = thing
+
+	if err != nil {
+		log.Println(err, "error from the model")
+	}
+
+	//log.Println("answer: " + thing)
 
 	// this creates files
 	/*
@@ -135,7 +148,8 @@ func getClient() *openai.Client {
 	return openai.NewClient(key)
 }
 
-func (inp Input) getChatStreamResponse() (string, error) {
+func (inp Input) getChatStreamResponse() (string, error, string) {
+
 	var array = []openai.ChatCompletionMessage{
 		{
 			Role:    "system",
@@ -147,7 +161,7 @@ func (inp Input) getChatStreamResponse() (string, error) {
 		},
 	}
 
-	request := openai.ChatCompletionRequest{
+	var request openai.ChatCompletionRequest = openai.ChatCompletionRequest{
 		Model:           inp.model,
 		Messages:        array,
 		MaxTokens:       inp.maxTokens,
@@ -155,34 +169,63 @@ func (inp Input) getChatStreamResponse() (string, error) {
 		TopP:            1,
 		PresencePenalty: 0.6,
 		Stop:            []string{"user:", "assistant:"},
+		Functions: []openai.FunctionDefinition{
+			{
+				Name:        "interview_questions",
+				Description: "gets questions for a job interview for a financial accounts manager in the UK in an array",
+				Parameters: map[string]interface{}{
+					"type": "object",
+					"properties": map[string]interface{}{
+						"questions": map[string]interface{}{
+							"type":        "array",
+							"items":       map[string]interface{}{"type": "string"},
+							"description": "List of interview questions",
+						},
+					},
+					"required": []string{"questions"},
+				},
+			},
+		},
+		FunctionCall: map[string]interface{}{"name": "interview_questions"},
 	}
 
 	stream, err := inp.client.CreateChatCompletionStream(context.Background(), request)
 	if err != nil {
 		log.Println(err, "createchatcompletionstream")
-		return "", err
+		return "", err, ""
 	}
 	defer stream.Close()
 
 	var buffer strings.Builder
+	var args []string
 	for {
 		response, err := stream.Recv()
 		if err != nil {
 			log.Println(err, "stream.Recv()")
-			return "", err
+			return "", err, ""
 		}
 
 		if len(response.Choices) > 0 {
 			choice := response.Choices[0]
 			buffer.WriteString(choice.Delta.Content)
+
+			if choice.Delta.FunctionCall != nil {
+				args = append(args, choice.Delta.FunctionCall.Arguments)
+			}
+
 		}
 
 		if response.Choices[0].FinishReason != "" {
+
 			break
 		}
+
 	}
 
-	return buffer.String(), nil
+	res := strings.Join(args, "")
+	log.Println(res)
+
+	return buffer.String(), nil, res
 }
 
 func getStreamResponse(prompt string, g *openai.Client) (string, error) {
