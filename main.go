@@ -24,26 +24,6 @@ type Input struct {
 type Plugin struct {
 }
 
-/*
-	/
-
-/ the string to be encoded
-
-	str := "This is an example sentence to try encoding out on!"
-
-	result, err := encode(str)
-	if err != nil {
-		log.Fatalf("Encoding failed: %v", err)
-	}
-
-	// print the encoded string and token count
-	fmt.Printf("Encoded tokens: %v\n", result.Tokens)
-	fmt.Printf("Token count: %d\n", result.
-)
-
-*
-*/
-
 func main() {
 
 	/*
