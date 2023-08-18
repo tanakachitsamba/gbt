@@ -28,13 +28,7 @@ func handleRequest(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Process the query
-	// Create the response object
-	//dataAndTime := time.DateTime
-
-	//location := "Nottingham, UK"
-	//manifest := `Don't answer questions that require locations or date/time like this "I'm sorry, as a software development agent, I don't have access to real-time weather and agricultural information.", use the data and time provided and the location provided to answer` + "the date and time is: " + dataAndTime + " and the location is: " + location + `\n`
-	inp := Input{client: getClient(), prompt: req.Query + "\n", model: "gpt-3.5-turbo-0613", temperature: 0.8, maxTokens: 1000, systemMessage: `You are a gardening assistant.Format the response so that it is readable.`}
+	inp := Input{client: getClient(), prompt: req.Query + "\n", model: "gpt-3.5-turbo-0613", temperature: 0.7, maxTokens: 250, systemMessage: `You are a gardening assistant. You provide concise and thoughtful answers to gardening topics.`}
 
 	res, err := inp.getChatStreamResponse()
 	_ = err
@@ -51,25 +45,4 @@ func handleRequest(w http.ResponseWriter, r *http.Request) {
 	// Set the content type and send the response
 	w.Header().Set("Content-Type", "application/json")
 	w.Write(respJSON)
-}
-
-func getInput(prompt string) Input {
-	//inp := Input{client: getClient(), prompt: prompt + "\n", model: "gpt-3.5-turbo", temperature: 0.8, maxTokens: 400, systemMessage: `You are a gardening helper, you do not respond with any response that starts with "As an AI model".  You will only answer questions about gardening, allotmenting and any related topics to do with plant growing. If you recieve a question thats not related to gardening or allotments, you will politely decline to answer and respond with "I cannot answer that this question because it's not gardening related".  Use a friendly tone`}
-
-	inp := Input{client: getClient(), prompt: prompt + "\n", model: "gpt-4", temperature: 0.8, maxTokens: 1000, systemMessage: `You are a software development agent, your job is to write high quality non-buggy code`}
-
-	return inp
-}
-
-func processQuery(query string) string {
-	var (
-		res string
-		err error
-		inp Input = getInput(query)
-	)
-	res, err = inp.getChatStreamResponse()
-	_ = err
-	_ = inp
-
-	return res
 }

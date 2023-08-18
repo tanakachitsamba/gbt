@@ -51,12 +51,18 @@ func main() {
 	r := mux.NewRouter()
 	r.HandleFunc("/", handleRequest).Methods("POST")
 
-	// Enable CORS
-	corsHandler := cors.Default().Handler(r)
+	// Enable CORS with allowed origins
+	c := cors.New(cors.Options{
+		AllowedOrigins: []string{"http://192.168.0.17:3000"},
+		AllowedMethods: []string{"POST"},
+		AllowedHeaders: []string{"Content-Type"},
+	})
+
+	// Wrap the router with the CORS handler
+	corsHandler := c.Handler(r)
 
 	log.Println("Server listening on port 8080...")
 	log.Fatal(http.ListenAndServe(":8080", corsHandler))
-
 }
 
 func getClient() *openai.Client {
