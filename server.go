@@ -62,35 +62,6 @@ func getInput(prompt string) Input {
 }
 
 func processQuery(query string) string {
-	// Implement your query processing logic here
-
-	//prompt := "create a html landing page about offering an accounting service to nurses, use tailwind for the css and make the website professional in design standards. only respond with the code\n"
-
-	/*
-		enc, err := encode(query + "\n")
-		if err != nil {
-			log.Fatalf("Encoding failed: %v", err)
-		}
-		lenOfInputTokens := enc.Count
-		_ = lenOfInputTokens
-
-
-
-
-
-			prompt, err := ioutil.ReadFile("prompt.txt")
-			if err != nil {
-				log.Fatalf("Error reading file: %v", err)
-				os.Exit(1)
-			}
-
-
-	*/
-
-	// after use old prompt gets stored in history using unique name
-
-	//"gpt-3.5-turbo"
-
 	var (
 		res string
 		err error
