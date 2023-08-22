@@ -14,11 +14,16 @@ type Response struct {
 }
 
 func handleRequest(w http.ResponseWriter, r *http.Request) {
+	// Set CORS headers before writing response
+	w.Header().Set("Access-Control-Allow-Origin", "http://localhost:3000")
+	w.Header().Set("Access-Control-Allow-Methods", "POST")
+	w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
+
 	// Only allow POST requests
-	if r.Method != http.MethodPost {
-		w.WriteHeader(http.StatusMethodNotAllowed)
-		return
-	}
+	//if r.Method != http.MethodPost {
+	//	w.WriteHeader(http.StatusMethodNotAllowed)
+	//	return
+	//}
 
 	// Parse the JSON payload
 	var req Request

@@ -7,7 +7,6 @@ import (
 	"os"
 	"strings"
 
-	"github.com/gorilla/mux"
 	"github.com/joho/godotenv"
 	"github.com/rs/cors"
 
@@ -48,26 +47,17 @@ type Plugin struct {
 */
 
 func main() {
-	r := mux.NewRouter()
-	r.HandleFunc("/", handleRequest).Methods("POST")
+	// Enable CORS with allowed origins
+	c := cors.New(cors.Options{
+		AllowedOrigins: []string{"http://localhost:3000"},
+		AllowedMethods: []string{"POST"},
+		AllowedHeaders: []string{"Content-Type"},
+	})
 
-	/*
-
-			// Enable CORS with allowed origins
-		c := cors.New(cors.Options{
-			AllowedOrigins: []string{"http://198.211.111.194:3000"},
-			AllowedMethods: []string{"POST"},
-			AllowedHeaders: []string{"Content-Type"},
-		})
-
-
-	*/
-
-	// Wrap the router with the CORS handler
-	corsHandler := cors.Default().Handler(r)
+	handler := c.Handler(http.HandlerFunc(handleRequest))
 
 	log.Println("Server listening on port 8080...")
-	log.Fatal(http.ListenAndServe(":8080", corsHandler))
+	log.Fatal(http.ListenAndServe(":8080", handler))
 }
 
 func getClient() *openai.Client {
