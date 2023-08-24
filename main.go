@@ -49,7 +49,7 @@ type Plugin struct {
 func main() {
 	// Enable CORS with allowed origins
 	c := cors.New(cors.Options{
-		AllowedOrigins: []string{"http://localhost:3000"},
+		AllowedOrigins: []string{"http://127.0.0.1:5173"},
 		AllowedMethods: []string{"POST"},
 		AllowedHeaders: []string{"Content-Type"},
 	})

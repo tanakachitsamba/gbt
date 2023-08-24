@@ -15,7 +15,7 @@ type Response struct {
 
 func handleRequest(w http.ResponseWriter, r *http.Request) {
 	// Set CORS headers before writing response
-	w.Header().Set("Access-Control-Allow-Origin", "http://localhost:3000")
+	w.Header().Set("Access-Control-Allow-Origin", "http://127.0.0.1:5173")
 	w.Header().Set("Access-Control-Allow-Methods", "POST")
 	w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
 
@@ -35,7 +35,7 @@ func handleRequest(w http.ResponseWriter, r *http.Request) {
 
 	// "gpt-3.5-turbo-0613"
 	// `You are a gardening assistant. You provide concise and thoughtful answers to gardening topics.`
-	inp := Input{client: getClient(), prompt: req.Query + "\n", model: "gpt-4-0613", temperature: 0.7, maxTokens: 250, systemMessage: `You are a personal assistant. You provide concise and thoughtful answers `}
+	inp := Input{client: getClient(), prompt: req.Query + "\n", model: "gpt-4-0613", temperature: 0.7, maxTokens: 250, systemMessage: `You are a personal assistant.`}
 
 	res, err := inp.getChatStreamResponse()
 	_ = err
