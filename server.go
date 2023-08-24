@@ -33,15 +33,15 @@ func handleRequest(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	inp := Input{client: getClient(), prompt: req.Query + "\n", model: "gpt-3.5-turbo-0613", temperature: 0.7, maxTokens: 250, systemMessage: `You are a gardening assistant. You provide concise and thoughtful answers to gardening topics.`}
+	// "gpt-3.5-turbo-0613"
+	// `You are a gardening assistant. You provide concise and thoughtful answers to gardening topics.`
+	inp := Input{client: getClient(), prompt: req.Query + "\n", model: "gpt-4-0613", temperature: 0.7, maxTokens: 250, systemMessage: `You are a personal assistant. You provide concise and thoughtful answers `}
 
 	res, err := inp.getChatStreamResponse()
 	_ = err
 
-	resp := Response{Result: res}
-
 	// Convert the response object to JSON
-	respJSON, err := json.Marshal(resp)
+	respJSON, err := json.Marshal(Response{Result: res})
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
