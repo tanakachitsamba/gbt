@@ -1,5 +1,4 @@
 //go:build ignore
-// +build ignore
 
 //nolint:all // Legacy scraping prototype not used in production.
 package main
