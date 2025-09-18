@@ -3,6 +3,8 @@ package main
 import (
 	"encoding/json"
 	"net/http"
+
+	appopenai "guava/pkg/openai"
 )
 
 type Request struct {
@@ -19,26 +21,33 @@ func handleRequest(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Access-Control-Allow-Methods", "POST")
 	w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
 
-	// Only allow POST requests
-	//if r.Method != http.MethodPost {
-	//	w.WriteHeader(http.StatusMethodNotAllowed)
-	//	return
-	//}
-
 	// Parse the JSON payload
 	var req Request
-	err := json.NewDecoder(r.Body).Decode(&req)
-	if err != nil {
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
 
-	inp := Input{client: getClient(), prompt: req.Query + "\n", model: "gpt-3.5-turbo-0613", temperature: 0.7, maxTokens: 250, systemMessage: `You are a gardening assistant. You provide concise and thoughtful answers to gardening topics.`}
+	config := appopenai.ResponseConfig{
+		Model:           appopenai.ModelGPT4oMini,
+		Temperature:     appopenai.Float32Ptr(0.7),
+		MaxOutputTokens: appopenai.IntPtr(250),
+		Instructions:    `You are a gardening assistant. You provide concise and thoughtful answers to gardening topics.`,
+	}
 
-	res, err := inp.getChatStreamResponse()
-	_ = err
+	inp := Input{
+		client: getClient(),
+		prompt: req.Query + "\n",
+		config: config,
+	}
 
-	resp := Response{Result: res}
+	result, err := inp.getChatStreamResponse()
+	if err != nil {
+		http.Error(w, "failed to generate response", http.StatusInternalServerError)
+		return
+	}
+
+	resp := Response{Result: result}
 
 	// Convert the response object to JSON
 	respJSON, err := json.Marshal(resp)

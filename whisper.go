@@ -3,15 +3,15 @@ package main
 import (
 	"context"
 	"fmt"
-	"io/ioutil"
+	"os"
 	"strings"
 	"sync"
 
-	"github.com/sashabaranov/go-openai"
+	"github.com/openai/openai-go"
 )
 
 type transcriptionClient interface {
-	CreateTranscription(context.Context, openai.AudioRequest) (openai.AudioResponse, error)
+	CreateTranscription(context.Context, openai.AudioTranscriptionNewParams) (*openai.Transcription, error)
 }
 
 type transcriptionResult struct {
@@ -24,11 +24,19 @@ type transcriptionResult struct {
 func transcribeFile(c transcriptionClient, ctx context.Context, audioFile string, index int, wg *sync.WaitGroup, results chan<- transcriptionResult) {
 	defer wg.Done()
 
-	req := openai.AudioRequest{
-		Model:    openai.Whisper1,
-		FilePath: audioFile,
+	file, err := os.Open(audioFile)
+	if err != nil {
+		results <- transcriptionResult{index: index, file: audioFile, err: fmt.Errorf("open audio file: %w", err)}
+		return
 	}
-	resp, err := c.CreateTranscription(ctx, req)
+	defer file.Close()
+
+	params := openai.AudioTranscriptionNewParams{
+		Model: openai.AudioModelWhisper1,
+		File:  file,
+	}
+
+	resp, err := c.CreateTranscription(ctx, params)
 	if err != nil {
 		results <- transcriptionResult{index: index, file: audioFile, err: err}
 		return
@@ -38,13 +46,12 @@ func transcribeFile(c transcriptionClient, ctx context.Context, audioFile string
 }
 
 func whisper(c transcriptionClient, ctx context.Context) ([]string, error) {
-
 	// Define the audio files directory and the audio format
 	audioDir := "audios/"
 	audioFormat := ".mp3"
 
 	// Read the audio files from the directory
-	files, err := ioutil.ReadDir(audioDir)
+	files, err := os.ReadDir(audioDir)
 	if err != nil {
 		return nil, fmt.Errorf("error reading audio directory: %w", err)
 	}

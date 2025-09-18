@@ -3,12 +3,13 @@ package main
 import (
 	"context"
 	"fmt"
+	"io"
 	"os"
 	"path/filepath"
 	"testing"
 	"time"
 
-	"github.com/sashabaranov/go-openai"
+	"github.com/openai/openai-go"
 )
 
 type mockTranscriptionClient struct {
@@ -16,17 +17,33 @@ type mockTranscriptionClient struct {
 	delays    map[string]time.Duration
 }
 
-func (m *mockTranscriptionClient) CreateTranscription(ctx context.Context, req openai.AudioRequest) (openai.AudioResponse, error) {
-	if delay, ok := m.delays[req.FilePath]; ok {
+type fileNamer interface {
+	Name() string
+}
+
+func (m *mockTranscriptionClient) CreateTranscription(ctx context.Context, params openai.AudioTranscriptionNewParams) (*openai.Transcription, error) {
+	if params.File == nil {
+		return nil, fmt.Errorf("missing file reader")
+	}
+
+	var path string
+	if named, ok := params.File.(fileNamer); ok {
+		path = named.Name()
+	}
+	if closer, ok := params.File.(io.Seeker); ok {
+		_, _ = closer.Seek(0, io.SeekStart)
+	}
+
+	if delay, ok := m.delays[path]; ok {
 		time.Sleep(delay)
 	}
 
-	response, ok := m.responses[req.FilePath]
+	response, ok := m.responses[path]
 	if !ok {
-		return openai.AudioResponse{}, fmt.Errorf("unexpected file: %s", req.FilePath)
+		return nil, fmt.Errorf("unexpected file: %s", path)
 	}
 
-	return openai.AudioResponse{Text: response}, nil
+	return &openai.Transcription{Text: response}, nil
 }
 
 func TestWhisperMultipleFiles(t *testing.T) {

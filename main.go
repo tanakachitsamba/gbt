@@ -5,22 +5,19 @@ import (
 	"log"
 	"net/http"
 	"os"
-	"strings"
 
 	"github.com/joho/godotenv"
 	"github.com/rs/cors"
 
-	"github.com/sashabaranov/go-openai"
-	//"github.com/joho/godotenv"
-	//gogpt "github.com/sashabaranov/go-gpt3"
+	"github.com/openai/openai-go/option"
+	appopenai "guava/pkg/openai"
 )
 
 type Input struct {
-	client                       *openai.Client
-	prompt, model, systemMessage string
-	temperature                  float32
-	maxTokens                    int
-	res                          string // maybe this could be a generic so that it can be both a slice, string or a null
+	client    *appopenai.Client
+	prompt    string
+	config    appopenai.ResponseConfig
+	callbacks appopenai.StreamCallbacks
 }
 
 type Plugin struct {
@@ -60,98 +57,52 @@ func main() {
 	log.Fatal(http.ListenAndServe(":8080", handler))
 }
 
-func getClient() *openai.Client {
+func getClient() *appopenai.Client {
 	// Get the OpenAI API key from the .env file
 	if err := godotenv.Load(); err != nil {
 		log.Println("error loading .env file:", err)
 	}
 
-	var key string = os.Getenv("OPENAI_KEY")
+	key := os.Getenv("OPENAI_KEY")
+	if key == "" {
+		return appopenai.NewClient()
+	}
 
-	return openai.NewClient(key)
+	return appopenai.NewClient(option.WithAPIKey(key))
 }
 
 func (inp Input) getChatStreamResponse() (string, error) {
-	var array = []openai.ChatCompletionMessage{
-		{
-			Role:    "system",
-			Content: inp.systemMessage,
-		},
-		{
-			Role:    "user",
-			Content: inp.prompt,
-		},
+	if inp.client == nil {
+		return "", appopenai.ErrMissingClient
 	}
 
-	request := openai.ChatCompletionRequest{
-		Model:           inp.model,
-		Messages:        array,
-		MaxTokens:       inp.maxTokens,
-		Temperature:     inp.temperature,
-		TopP:            1,
-		PresencePenalty: 0.6,
-		Stop:            []string{"user:", "assistant:"},
-	}
-
-	stream, err := inp.client.CreateChatCompletionStream(context.Background(), request)
+	result, err := inp.client.StreamResponse(context.Background(), appopenai.ResponseRequest{
+		Input:     inp.prompt,
+		Config:    inp.config,
+		Callbacks: inp.callbacks,
+	})
 	if err != nil {
-		log.Println(err, "createchatcompletionstream")
+		log.Println(err, "responses stream")
 		return "", err
 	}
-	defer stream.Close()
 
-	var buffer strings.Builder
-	for {
-		response, err := stream.Recv()
-		if err != nil {
-			log.Println(err, "stream.Recv()")
-			return "", err
-		}
-
-		if len(response.Choices) > 0 {
-			choice := response.Choices[0]
-			buffer.WriteString(choice.Delta.Content)
-		}
-
-		if response.Choices[0].FinishReason != "" {
-			break
-		}
-	}
-
-	return buffer.String(), nil
+	return result.Text, nil
 }
 
-func getStreamResponse(prompt string, g *openai.Client) (string, error) {
-	request := openai.CompletionRequest{
-		Model:     "text-ada-001",
-		MaxTokens: 500,
-		Prompt:    prompt,
-		Stream:    true,
-		//Stop:            []string{"human:", "ai:"},
-		//Temperature:     0,
-		//TopP:            1,
-		//PresencePenalty: 0.6,
+func getStreamResponse(prompt string, client *appopenai.Client) (string, error) {
+	if client == nil {
+		return "", appopenai.ErrMissingClient
 	}
 
-	stream, err := g.CreateCompletionStream(context.Background(), request)
+	result, err := client.StreamResponse(context.Background(), appopenai.ResponseRequest{
+		Input: prompt,
+		Config: appopenai.ResponseConfig{
+			Model: appopenai.ModelGPT4oMini,
+		},
+	})
 	if err != nil {
 		return "", err
 	}
-	defer stream.Close()
 
-	var buffer strings.Builder
-	for {
-		response, err := stream.Recv()
-		if err != nil {
-			return "", err
-		}
-
-		buffer.WriteString(response.Choices[0].Text)
-
-		if response.Choices[0].FinishReason != "" {
-			break
-		}
-	}
-
-	return buffer.String(), nil
+	return result.Text, nil
 }

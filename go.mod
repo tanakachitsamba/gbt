@@ -1,15 +1,17 @@
 module guava
 
-go 1.20
+go 1.21
+
+toolchain go1.24.3
 
 require (
 	github.com/gocolly/colly v1.2.0
 	github.com/joho/godotenv v1.5.1
 	github.com/marcboeker/go-duckdb v1.4.4
+	github.com/openai/openai-go v1.12.0
 	github.com/pkoukk/tiktoken-go v0.1.8
 	github.com/pkoukk/tiktoken-go-loader v0.0.2
 	github.com/rs/cors v1.9.0
-	github.com/sashabaranov/go-openai v1.9.5
 	github.com/twilio/twilio-go v1.7.1
 )
 
@@ -24,15 +26,19 @@ require (
 	github.com/golang/groupcache v0.0.0-20210331224755-41bb18bfe9da // indirect
 	github.com/golang/mock v1.6.0 // indirect
 	github.com/golang/protobuf v1.5.3 // indirect
-	github.com/google/uuid v1.3.0 // indirect
+	github.com/google/uuid v1.6.0 // indirect
 	github.com/kennygrant/sanitize v1.2.4 // indirect
 	github.com/mitchellh/mapstructure v1.5.0 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/saintfish/chardet v0.0.0-20230101081208-5e3ef4b5456d // indirect
 	github.com/stretchr/testify v1.8.4 // indirect
 	github.com/temoto/robotstxt v1.1.2 // indirect
-	golang.org/x/net v0.10.0 // indirect
-	golang.org/x/text v0.9.0 // indirect
+	github.com/tidwall/gjson v1.14.4 // indirect
+	github.com/tidwall/match v1.1.1 // indirect
+	github.com/tidwall/pretty v1.2.1 // indirect
+	github.com/tidwall/sjson v1.2.5 // indirect
+	golang.org/x/net v0.34.0 // indirect
+	golang.org/x/text v0.21.0 // indirect
 	google.golang.org/appengine v1.6.7 // indirect
 	google.golang.org/protobuf v1.30.0 // indirect
 )
