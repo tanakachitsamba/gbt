@@ -170,12 +170,9 @@ func validateVectorStoreRequest(req VectorStoreRequestV1) error {
 }
 
 func handleServiceError(w http.ResponseWriter, err error) {
-	switch {
-	case errors.Is(err, errMissingModel), errors.Is(err, errMissingInput), errors.Is(err, errAssistantName), errors.Is(err, errVectorStoreName):
-		writeError(w, http.StatusBadRequest, err.Error())
-	default:
-		writeError(w, http.StatusInternalServerError, "upstream error: "+err.Error())
-	}
+	// Treat all validation errors as Bad Request, others as Internal Server Error.
+	// If validation functions return errors, they should be considered client errors.
+	writeError(w, http.StatusBadRequest, err.Error())
 }
 
 func writeJSON(w http.ResponseWriter, status int, payload any) {
