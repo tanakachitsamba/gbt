@@ -2,156 +2,104 @@ package main
 
 import (
 	"context"
+	"errors"
 	"log"
+	"log/slog"
 	"net/http"
 	"os"
+	"os/signal"
 	"strings"
+	"syscall"
+	"time"
 
 	"github.com/joho/godotenv"
-	"github.com/rs/cors"
 
-	"github.com/sashabaranov/go-openai"
-	//"github.com/joho/godotenv"
-	//gogpt "github.com/sashabaranov/go-gpt3"
+	"guava/internal/openaiclient"
+	"guava/internal/server"
 )
-
-type Input struct {
-	client                       *openai.Client
-	prompt, model, systemMessage string
-	temperature                  float32
-	maxTokens                    int
-	res                          string // maybe this could be a generic so that it can be both a slice, string or a null
-}
-
-type Plugin struct {
-}
-
-/*
-	/
-
-/ the string to be encoded
-
-	str := "This is an example sentence to try encoding out on!"
-
-	result, err := encode(str)
-	if err != nil {
-		log.Fatalf("Encoding failed: %v", err)
-	}
-
-	// print the encoded string and token count
-	fmt.Printf("Encoded tokens: %v\n", result.Tokens)
-	fmt.Printf("Token count: %d\n", result.
-)
-
-*
-*/
 
 func main() {
-	// Enable CORS with allowed origins
-	c := cors.New(cors.Options{
-		AllowedOrigins: []string{"http://localhost:3000"},
-		AllowedMethods: []string{"POST"},
-		AllowedHeaders: []string{"Content-Type"},
+	if err := run(); err != nil {
+		log.Fatalf("server failed: %v", err)
+	}
+}
+
+func run() error {
+	_ = godotenv.Load()
+
+	logger := slog.New(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelInfo}))
+
+	client, err := openaiclient.NewFromEnvironment()
+	if err != nil {
+		return err
+	}
+
+	srv := server.New(server.Config{
+		AllowedOrigins: parseAllowedOrigins(os.Getenv("ALLOWED_ORIGINS")),
+		Responses:      client.Responses(),
+		Logger:         logger,
 	})
 
-	handler := c.Handler(http.HandlerFunc(handleRequest))
-
-	log.Println("Server listening on port 8080...")
-	log.Fatal(http.ListenAndServe(":8080", handler))
-}
-
-func getClient() *openai.Client {
-	// Get the OpenAI API key from the .env file
-	if err := godotenv.Load(); err != nil {
-		log.Println("error loading .env file:", err)
+	httpServer := &http.Server{
+		Addr:              ":" + serverPort(),
+		Handler:           srv,
+		ReadTimeout:       15 * time.Second,
+		ReadHeaderTimeout: 10 * time.Second,
+		WriteTimeout:      60 * time.Second,
+		IdleTimeout:       120 * time.Second,
 	}
 
-	var key string = os.Getenv("OPENAI_KEY")
+	shutdown := make(chan os.Signal, 1)
+	signal.Notify(shutdown, syscall.SIGINT, syscall.SIGTERM)
 
-	return openai.NewClient(key)
-}
+	serverErr := make(chan error, 1)
+	go func() {
+		logger.Info("http server starting", slog.String("addr", httpServer.Addr))
+		if err := httpServer.ListenAndServe(); !errors.Is(err, http.ErrServerClosed) {
+			serverErr <- err
+		}
+		close(serverErr)
+	}()
 
-func (inp Input) getChatStreamResponse() (string, error) {
-	var array = []openai.ChatCompletionMessage{
-		{
-			Role:    "system",
-			Content: inp.systemMessage,
-		},
-		{
-			Role:    "user",
-			Content: inp.prompt,
-		},
-	}
-
-	request := openai.ChatCompletionRequest{
-		Model:           inp.model,
-		Messages:        array,
-		MaxTokens:       inp.maxTokens,
-		Temperature:     inp.temperature,
-		TopP:            1,
-		PresencePenalty: 0.6,
-		Stop:            []string{"user:", "assistant:"},
-	}
-
-	stream, err := inp.client.CreateChatCompletionStream(context.Background(), request)
-	if err != nil {
-		log.Println(err, "createchatcompletionstream")
-		return "", err
-	}
-	defer stream.Close()
-
-	var buffer strings.Builder
-	for {
-		response, err := stream.Recv()
+	select {
+	case err := <-serverErr:
 		if err != nil {
-			log.Println(err, "stream.Recv()")
-			return "", err
+			return err
 		}
-
-		if len(response.Choices) > 0 {
-			choice := response.Choices[0]
-			buffer.WriteString(choice.Delta.Content)
-		}
-
-		if response.Choices[0].FinishReason != "" {
-			break
-		}
+		return nil
+	case sig := <-shutdown:
+		logger.Info("shutdown signal received", slog.Any("signal", sig))
 	}
 
-	return buffer.String(), nil
+	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
+	defer cancel()
+
+	if err := httpServer.Shutdown(ctx); err != nil {
+		return err
+	}
+
+	return nil
 }
 
-func getStreamResponse(prompt string, g *openai.Client) (string, error) {
-	request := openai.CompletionRequest{
-		Model:     "text-ada-001",
-		MaxTokens: 500,
-		Prompt:    prompt,
-		Stream:    true,
-		//Stop:            []string{"human:", "ai:"},
-		//Temperature:     0,
-		//TopP:            1,
-		//PresencePenalty: 0.6,
+func parseAllowedOrigins(raw string) []string {
+	if raw == "" {
+		return nil
 	}
-
-	stream, err := g.CreateCompletionStream(context.Background(), request)
-	if err != nil {
-		return "", err
-	}
-	defer stream.Close()
-
-	var buffer strings.Builder
-	for {
-		response, err := stream.Recv()
-		if err != nil {
-			return "", err
-		}
-
-		buffer.WriteString(response.Choices[0].Text)
-
-		if response.Choices[0].FinishReason != "" {
-			break
+	parts := strings.Split(raw, ",")
+	out := make([]string, 0, len(parts))
+	for _, part := range parts {
+		trimmed := strings.TrimSpace(part)
+		if trimmed != "" {
+			out = append(out, trimmed)
 		}
 	}
+	return out
+}
 
-	return buffer.String(), nil
+func serverPort() string {
+	port := os.Getenv("PORT")
+	if port == "" {
+		return "8080"
+	}
+	return port
 }

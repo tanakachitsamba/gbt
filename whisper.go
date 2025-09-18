@@ -3,15 +3,16 @@ package main
 import (
 	"context"
 	"fmt"
-	"io/ioutil"
+	"os"
+	"path/filepath"
 	"strings"
 	"sync"
 
-	"github.com/sashabaranov/go-openai"
+	"github.com/openai/openai-go"
 )
 
 type transcriptionClient interface {
-	CreateTranscription(context.Context, openai.AudioRequest) (openai.AudioResponse, error)
+	CreateTranscription(context.Context, openai.AudioTranscriptionNewParams) (*openai.Transcription, error)
 }
 
 type transcriptionResult struct {
@@ -24,11 +25,19 @@ type transcriptionResult struct {
 func transcribeFile(c transcriptionClient, ctx context.Context, audioFile string, index int, wg *sync.WaitGroup, results chan<- transcriptionResult) {
 	defer wg.Done()
 
-	req := openai.AudioRequest{
-		Model:    openai.Whisper1,
-		FilePath: audioFile,
+	file, err := os.Open(audioFile)
+	if err != nil {
+		results <- transcriptionResult{index: index, file: audioFile, err: err}
+		return
 	}
-	resp, err := c.CreateTranscription(ctx, req)
+	defer file.Close()
+
+	params := openai.AudioTranscriptionNewParams{
+		Model: openai.AudioModelWhisper1,
+		File:  file,
+	}
+
+	resp, err := c.CreateTranscription(ctx, params)
 	if err != nil {
 		results <- transcriptionResult{index: index, file: audioFile, err: err}
 		return
@@ -38,22 +47,22 @@ func transcribeFile(c transcriptionClient, ctx context.Context, audioFile string
 }
 
 func whisper(c transcriptionClient, ctx context.Context) ([]string, error) {
-
-	// Define the audio files directory and the audio format
-	audioDir := "audios/"
+	audioDir := "audios"
 	audioFormat := ".mp3"
 
-	// Read the audio files from the directory
-	files, err := ioutil.ReadDir(audioDir)
+	entries, err := os.ReadDir(audioDir)
 	if err != nil {
 		return nil, fmt.Errorf("error reading audio directory: %w", err)
 	}
 
-	// Filter audio files based on the audio format
-	var audioFiles []string
-	for _, file := range files {
-		if strings.HasSuffix(file.Name(), audioFormat) {
-			audioFiles = append(audioFiles, audioDir+file.Name())
+	audioFiles := make([]string, 0, len(entries))
+	for _, entry := range entries {
+		if entry.IsDir() {
+			continue
+		}
+		name := entry.Name()
+		if strings.EqualFold(filepath.Ext(name), audioFormat) {
+			audioFiles = append(audioFiles, filepath.Join(audioDir, name))
 		}
 	}
 
