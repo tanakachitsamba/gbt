@@ -115,9 +115,9 @@ func TokenIDsForModel(text, model string) ([]int, error) {
 // TokenCountForModel returns the number of tokens for the provided text using
 // the encoding associated with the supplied OpenAI model name.
 func TokenCountForModel(text, model string) (int, error) {
-	tokens, err := TokenIDsForModel(text, model)
+	enc, err := encodingForModel(model)
 	if err != nil {
 		return 0, err
 	}
-	return len(tokens), nil
+	return len(enc.Encode(text, nil, nil)), nil
 }
