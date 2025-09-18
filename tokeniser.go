@@ -6,6 +6,8 @@ import (
 	"os/exec"
 )
 
+var execCommand = exec.Command
+
 // define a struct to hold the JSON output
 type EncoderOutput struct {
 	Tokens []int `json:"tokens"`
@@ -15,7 +17,7 @@ type EncoderOutput struct {
 // encode function takes a string to be encoded and returns encoded tokens and their count
 func encode(str string) (EncoderOutput, error) {
 	// run the JavaScript file with Node.js
-	cmd := exec.Command("node", "encoder.js", str)
+	cmd := execCommand("node", "encoder.js", str)
 
 	// get the output of the command
 	output, err := cmd.CombinedOutput()

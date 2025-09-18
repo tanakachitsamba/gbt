@@ -1,3 +1,8 @@
+//go:build ignore
+// +build ignore
+
+//nolint:all // Contains experimental examples that are not part of the production service.
+//
 // Run with:
 // CGO_LDFLAGS="-L<path to libduckdb_static.a>" CGO_CFLAGS="-I<path to duckdb.h>" DYLD_LIBRARY_PATH="<path to libduckdb.dylib>" go run examples/test.go
 

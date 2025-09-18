@@ -2,8 +2,11 @@ package main
 
 import (
 	"encoding/json"
+	"log"
 	"net/http"
 )
+
+var getClientFunc = getClient
 
 type Request struct {
 	Query string `json:"query"`
@@ -27,16 +30,19 @@ func handleRequest(w http.ResponseWriter, r *http.Request) {
 
 	// Parse the JSON payload
 	var req Request
-	err := json.NewDecoder(r.Body).Decode(&req)
-	if err != nil {
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
 
-	inp := Input{client: getClient(), prompt: req.Query + "\n", model: "gpt-3.5-turbo-0613", temperature: 0.7, maxTokens: 250, systemMessage: `You are a gardening assistant. You provide concise and thoughtful answers to gardening topics.`}
+	inp := Input{client: getClientFunc(), prompt: req.Query + "\n", model: "gpt-3.5-turbo-0613", temperature: 0.7, maxTokens: 250, systemMessage: `You are a gardening assistant. You provide concise and thoughtful answers to gardening topics.`}
 
 	res, err := inp.getChatStreamResponse()
-	_ = err
+	if err != nil {
+		log.Println("failed to obtain chat completion:", err)
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		return
+	}
 
 	resp := Response{Result: res}
 
@@ -49,5 +55,7 @@ func handleRequest(w http.ResponseWriter, r *http.Request) {
 
 	// Set the content type and send the response
 	w.Header().Set("Content-Type", "application/json")
-	w.Write(respJSON)
+	if _, err := w.Write(respJSON); err != nil {
+		log.Println("failed to write response:", err)
+	}
 }

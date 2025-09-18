@@ -1,3 +1,7 @@
+//go:build ignore
+// +build ignore
+
+//nolint:all // Legacy Whisper integration kept for reference.
 package main
 
 import (
