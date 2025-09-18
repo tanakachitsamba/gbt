@@ -1,5 +1,4 @@
 //go:build ignore
-// +build ignore
 
 //nolint:all // Legacy SMS helper retained for reference only.
 package main
