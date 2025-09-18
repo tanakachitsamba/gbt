@@ -183,12 +183,7 @@ func buildMessages(req ResponseRequestV1) []openai.ChatCompletionMessage {
 		}
 	}
 
-	if !hasUser && req.Instructions != "" {
-		messages = append(messages, openai.ChatCompletionMessage{
-			Role:    openai.ChatMessageRoleUser,
-			Content: req.Instructions,
-		})
-	}
+	// Do not duplicate instructions as a user message if no user input is present.
 
 	return messages
 }
