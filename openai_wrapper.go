@@ -183,10 +183,11 @@ func buildMessages(req ResponseRequestV1) []openai.ChatCompletionMessage {
 		}
 	}
 
-	if !hasUser && req.Instructions != "" {
+	// If no user message exists, optionally add a fallback user message.
+	if !hasUser {
 		messages = append(messages, openai.ChatCompletionMessage{
 			Role:    openai.ChatMessageRoleUser,
-			Content: req.Instructions,
+			Content: "No user input provided.",
 		})
 	}
 
