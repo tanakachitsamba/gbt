@@ -1,5 +1,4 @@
 //go:build ignore
-// +build ignore
 
 //nolint:all // Contains experimental examples that are not part of the production service.
 //
