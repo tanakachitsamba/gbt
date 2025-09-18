@@ -4,8 +4,10 @@ go 1.20
 
 require (
 	github.com/gocolly/colly v1.2.0
+	github.com/google/uuid v1.3.1
 	github.com/gorilla/mux v1.8.0
 	github.com/joho/godotenv v1.5.1
+	github.com/marcboeker/go-duckdb v1.4.4
 	github.com/rs/cors v1.9.0
 	github.com/sashabaranov/go-openai v1.9.5
 	github.com/twilio/twilio-go v1.7.1
@@ -22,7 +24,6 @@ require (
 	github.com/golang/mock v1.6.0 // indirect
 	github.com/golang/protobuf v1.5.3 // indirect
 	github.com/kennygrant/sanitize v1.2.4 // indirect
-	github.com/marcboeker/go-duckdb v1.4.4 // indirect
 	github.com/mitchellh/mapstructure v1.5.0 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/saintfish/chardet v0.0.0-20230101081208-5e3ef4b5456d // indirect
