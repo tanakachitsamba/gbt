@@ -169,9 +169,27 @@ func validateVectorStoreRequest(req VectorStoreRequestV1) error {
 	return nil
 }
 
+// validationErrors contains all known validation error variables.
+var validationErrors = []error{
+	errMissingModel,
+	errMissingInput,
+	errAssistantName,
+	errVectorStoreName,
+}
+
+// isValidationError checks if err matches any known validation error.
+func isValidationError(err error) bool {
+	for _, ve := range validationErrors {
+		if errors.Is(err, ve) {
+			return true
+		}
+	}
+	return false
+}
+
 func handleServiceError(w http.ResponseWriter, err error) {
 	switch {
-	case errors.Is(err, errMissingModel), errors.Is(err, errMissingInput), errors.Is(err, errAssistantName), errors.Is(err, errVectorStoreName):
+	case isValidationError(err):
 		writeError(w, http.StatusBadRequest, err.Error())
 	default:
 		writeError(w, http.StatusInternalServerError, "upstream error: "+err.Error())
