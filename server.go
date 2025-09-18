@@ -113,7 +113,7 @@ func decodeJSON(r *http.Request, target any) error {
 		return fmt.Errorf("invalid JSON payload: %w", err)
 	}
 
-	if err := decoder.Decode(&struct{}{}); err != io.EOF {
+	if decoder.More() {
 		return errors.New("invalid JSON payload: multiple documents not supported")
 	}
 
