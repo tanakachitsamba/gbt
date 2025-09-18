@@ -1,5 +1,4 @@
 //go:build ignore
-// +build ignore
 
 //nolint:all // Experimental utilities kept for reference.
 package main
