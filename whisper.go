@@ -10,7 +10,18 @@ import (
 	"github.com/sashabaranov/go-openai"
 )
 
-func transcribeFile(c *openai.Client, ctx context.Context, audioFile string, wg *sync.WaitGroup, transcriptions *[]string) {
+type transcriptionClient interface {
+	CreateTranscription(context.Context, openai.AudioRequest) (openai.AudioResponse, error)
+}
+
+type transcriptionResult struct {
+	index int
+	file  string
+	text  string
+	err   error
+}
+
+func transcribeFile(c transcriptionClient, ctx context.Context, audioFile string, index int, wg *sync.WaitGroup, results chan<- transcriptionResult) {
 	defer wg.Done()
 
 	req := openai.AudioRequest{
@@ -19,14 +30,14 @@ func transcribeFile(c *openai.Client, ctx context.Context, audioFile string, wg 
 	}
 	resp, err := c.CreateTranscription(ctx, req)
 	if err != nil {
-		fmt.Printf("Transcription error for %s: %v\n", audioFile, err)
+		results <- transcriptionResult{index: index, file: audioFile, err: err}
 		return
 	}
 
-	*transcriptions = append(*transcriptions, resp.Text)
+	results <- transcriptionResult{index: index, file: audioFile, text: resp.Text}
 }
 
-func whisper(c *openai.Client, ctx context.Context) {
+func whisper(c transcriptionClient, ctx context.Context) ([]string, error) {
 
 	// Define the audio files directory and the audio format
 	audioDir := "audios/"
@@ -35,8 +46,7 @@ func whisper(c *openai.Client, ctx context.Context) {
 	// Read the audio files from the directory
 	files, err := ioutil.ReadDir(audioDir)
 	if err != nil {
-		fmt.Printf("Error reading audio directory: %v\n", err)
-		return
+		return nil, fmt.Errorf("error reading audio directory: %w", err)
 	}
 
 	// Filter audio files based on the audio format
@@ -47,19 +57,39 @@ func whisper(c *openai.Client, ctx context.Context) {
 		}
 	}
 
-	// Process the audio files and store their transcriptions in a slice
-	var transcriptions []string
+	transcriptions := make([]string, len(audioFiles))
+	results := make(chan transcriptionResult, len(audioFiles))
 	var wg sync.WaitGroup
-	for _, audioFile := range audioFiles {
+	for idx, audioFile := range audioFiles {
 		wg.Add(1)
-		go transcribeFile(c, ctx, audioFile, &wg, &transcriptions)
+		go transcribeFile(c, ctx, audioFile, idx, &wg, results)
 	}
 
-	wg.Wait()
+	go func() {
+		wg.Wait()
+		close(results)
+	}()
 
-	// Print the transcriptions
+	var errs []string
+	for res := range results {
+		if res.err != nil {
+			fmt.Printf("Transcription error for %s: %v\n", res.file, res.err)
+			errs = append(errs, fmt.Sprintf("%s: %v", res.file, res.err))
+			continue
+		}
+		transcriptions[res.index] = res.text
+	}
+
 	for i, transcription := range transcriptions {
+		if transcription == "" {
+			continue
+		}
 		fmt.Printf("Transcription %d: %s\n", i+1, transcription)
 	}
 
+	if len(errs) > 0 {
+		return transcriptions, fmt.Errorf(strings.Join(errs, "; "))
+	}
+
+	return transcriptions, nil
 }
