@@ -1,0 +1,80 @@
+package main
+
+import (
+	"context"
+	"fmt"
+	"os"
+	"path/filepath"
+	"testing"
+	"time"
+
+	"github.com/sashabaranov/go-openai"
+)
+
+type mockTranscriptionClient struct {
+	responses map[string]string
+	delays    map[string]time.Duration
+}
+
+func (m *mockTranscriptionClient) CreateTranscription(ctx context.Context, req openai.AudioRequest) (openai.AudioResponse, error) {
+	if delay, ok := m.delays[req.FilePath]; ok {
+		time.Sleep(delay)
+	}
+
+	response, ok := m.responses[req.FilePath]
+	if !ok {
+		return openai.AudioResponse{}, fmt.Errorf("unexpected file: %s", req.FilePath)
+	}
+
+	return openai.AudioResponse{Text: response}, nil
+}
+
+func TestWhisperMultipleFiles(t *testing.T) {
+	audioDir := "audios"
+	if err := os.MkdirAll(audioDir, 0o755); err != nil {
+		t.Fatalf("failed to create audio directory: %v", err)
+	}
+	t.Cleanup(func() {
+		if err := os.RemoveAll(audioDir); err != nil {
+			t.Errorf("failed to clean up audio directory: %v", err)
+		}
+	})
+
+	fileNames := []string{"b.mp3", "a.mp3", "c.mp3"}
+	for _, name := range fileNames {
+		path := filepath.Join(audioDir, name)
+		if err := os.WriteFile(path, []byte{}, 0o644); err != nil {
+			t.Fatalf("failed to create test audio file %s: %v", path, err)
+		}
+	}
+
+	mockClient := &mockTranscriptionClient{
+		responses: map[string]string{
+			filepath.Join(audioDir, "a.mp3"): "alpha",
+			filepath.Join(audioDir, "b.mp3"): "bravo",
+			filepath.Join(audioDir, "c.mp3"): "charlie",
+		},
+		delays: map[string]time.Duration{
+			filepath.Join(audioDir, "a.mp3"): 20 * time.Millisecond,
+			filepath.Join(audioDir, "b.mp3"): 5 * time.Millisecond,
+			filepath.Join(audioDir, "c.mp3"): 10 * time.Millisecond,
+		},
+	}
+
+	ctx := context.Background()
+	transcriptions, err := whisper(mockClient, ctx)
+	if err != nil {
+		t.Fatalf("whisper returned an error: %v", err)
+	}
+
+	expected := []string{"alpha", "bravo", "charlie"}
+	if len(transcriptions) != len(expected) {
+		t.Fatalf("expected %d transcriptions, got %d", len(expected), len(transcriptions))
+	}
+
+	for i, want := range expected {
+		if transcriptions[i] != want {
+			t.Errorf("transcription %d mismatch: want %q, got %q", i, want, transcriptions[i])
+		}
+	}
+}
