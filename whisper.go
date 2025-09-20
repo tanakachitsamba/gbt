@@ -48,7 +48,7 @@ func transcribeFile(c transcriptionClient, ctx context.Context, audioFile string
 
 func whisper(c transcriptionClient, ctx context.Context) ([]string, error) {
 	audioDir := "audios"
-	audioFormat := ".mp3"
+	targetExtension := ".mp3"
 
 	entries, err := os.ReadDir(audioDir)
 	if err != nil {
@@ -61,7 +61,7 @@ func whisper(c transcriptionClient, ctx context.Context) ([]string, error) {
 			continue
 		}
 		name := entry.Name()
-		if strings.EqualFold(filepath.Ext(name), audioFormat) {
+		if strings.EqualFold(filepath.Ext(name), targetExtension) {
 			audioFiles = append(audioFiles, filepath.Join(audioDir, name))
 		}
 	}

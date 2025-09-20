@@ -163,7 +163,7 @@ func buildToolParams(tools []ToolDefinition) ([]responses.ToolUnionParam, error)
 			if tool.Function.Description != "" {
 				fn.Description = param.NewOpt(tool.Function.Description)
 			}
-			strict := true
+			strict := false
 			if tool.Function.Strict != nil {
 				strict = *tool.Function.Strict
 			}
