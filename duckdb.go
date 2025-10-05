@@ -23,7 +23,8 @@ type user struct {
 	bday    time.Time
 }
 
-func duckdb_connect() {
+// connectDuckDB opens a DuckDB database and demonstrates basic operations.
+func connectDuckDB() {
 	// Use second argument to store DB on disk
 	// db, err := sql.Open("duckdb", "foobar.db")
 
