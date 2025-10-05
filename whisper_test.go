@@ -8,7 +8,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/sashabaranov/go-openai"
+	"github.com/openai/openai-go"
 )
 
 type mockTranscriptionClient struct {
@@ -16,17 +16,23 @@ type mockTranscriptionClient struct {
 	delays    map[string]time.Duration
 }
 
-func (m *mockTranscriptionClient) CreateTranscription(ctx context.Context, req openai.AudioRequest) (openai.AudioResponse, error) {
-	if delay, ok := m.delays[req.FilePath]; ok {
+func (m *mockTranscriptionClient) CreateTranscription(ctx context.Context, params openai.AudioTranscriptionNewParams) (*openai.Transcription, error) {
+	file, ok := params.File.(interface{ Name() string })
+	if !ok {
+		return nil, fmt.Errorf("unexpected file type %T", params.File)
+	}
+	path := file.Name()
+
+	if delay, ok := m.delays[path]; ok {
 		time.Sleep(delay)
 	}
 
-	response, ok := m.responses[req.FilePath]
+	response, ok := m.responses[path]
 	if !ok {
-		return openai.AudioResponse{}, fmt.Errorf("unexpected file: %s", req.FilePath)
+		return nil, fmt.Errorf("unexpected file: %s", path)
 	}
 
-	return openai.AudioResponse{Text: response}, nil
+	return &openai.Transcription{Text: response}, nil
 }
 
 func TestWhisperMultipleFiles(t *testing.T) {

@@ -1,44 +1,104 @@
 package main
 
 import (
-	"log"
-	"net/http"
-	"os"
+    "context"
+    "errors"
+    "log"
+    "log/slog"
+    "net/http"
+    "os"
+    "os/signal"
+    "strings"
+    "syscall"
+    "time"
 
-	"github.com/gorilla/mux"
-	"github.com/joho/godotenv"
-	"github.com/rs/cors"
-	"github.com/sashabaranov/go-openai"
+    "github.com/joho/godotenv"
+    "guava/internal/openaiclient"
+    "guava/internal/server"
 )
 
 func main() {
-	if err := godotenv.Load(); err != nil {
-		log.Println("warning: could not load .env file", err)
-	}
+    if err := run(); err != nil {
+        log.Fatalf("server failed: %v", err)
+    }
+}
 
-	apiKey := os.Getenv("OPENAI_KEY")
-	if apiKey == "" {
-		log.Fatal("OPENAI_KEY environment variable is not set")
-	}
+func run() error {
+    _ = godotenv.Load()
 
-	client := openai.NewClient(apiKey)
-	wrapper := NewOpenAIWrapper(client)
-	server := NewAPIServer(wrapper)
+    logger := slog.New(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelInfo}))
 
-	router := mux.NewRouter()
-	router.HandleFunc("/v1/responses", server.handleCreateResponse).Methods(http.MethodPost)
-	router.HandleFunc("/v1/threads", server.handleCreateThread).Methods(http.MethodPost)
-	router.HandleFunc("/v1/assistants", server.handleCreateAssistant).Methods(http.MethodPost)
-	router.HandleFunc("/v1/vector-stores", server.handleCreateVectorStore).Methods(http.MethodPost)
-	router.HandleFunc("/openapi.json", server.handleOpenAPIDocument).Methods(http.MethodGet)
-	router.HandleFunc("/swagger.json", server.handleOpenAPIDocument).Methods(http.MethodGet)
+    client, err := openaiclient.NewFromEnvironment()
+    if err != nil {
+        return err
+    }
 
-	corsHandler := cors.New(cors.Options{
-		AllowedOrigins: []string{"http://localhost:3000"},
-		AllowedMethods: []string{http.MethodGet, http.MethodPost, http.MethodOptions},
-		AllowedHeaders: []string{"Content-Type", "Authorization"},
-	}).Handler(router)
+    srv := server.New(server.Config{
+        AllowedOrigins: parseAllowedOrigins(os.Getenv("ALLOWED_ORIGINS")),
+        Responses:      client.Responses(),
+        Logger:         logger,
+    })
 
-	log.Println("Server listening on port 8080...")
-	log.Fatal(http.ListenAndServe(":8080", corsHandler))
+    httpServer := &http.Server{
+        Addr:              ":" + serverPort(),
+        Handler:           srv,
+        ReadTimeout:       15 * time.Second,
+        ReadHeaderTimeout: 10 * time.Second,
+        WriteTimeout:      60 * time.Second,
+        IdleTimeout:       120 * time.Second,
+    }
+
+    shutdown := make(chan os.Signal, 1)
+    signal.Notify(shutdown, syscall.SIGINT, syscall.SIGTERM)
+
+    serverErr := make(chan error, 1)
+    go func() {
+        logger.Info("http server starting", slog.String("addr", httpServer.Addr))
+        if err := httpServer.ListenAndServe(); !errors.Is(err, http.ErrServerClosed) {
+            serverErr <- err
+        }
+        close(serverErr)
+    }()
+
+    select {
+    case err := <-serverErr:
+        if err != nil {
+            return err
+        }
+        return nil
+    case sig := <-shutdown:
+        logger.Info("shutdown signal received", slog.Any("signal", sig))
+    }
+
+    ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
+    defer cancel()
+
+    if err := httpServer.Shutdown(ctx); err != nil {
+        return err
+    }
+
+    return nil
+}
+
+func parseAllowedOrigins(raw string) []string {
+    if raw == "" {
+        return nil
+    }
+    parts := strings.Split(raw, ",")
+    out := make([]string, 0, len(parts))
+    for _, part := range parts {
+        trimmed := strings.TrimSpace(part)
+        if trimmed != "" {
+            out = append(out, trimmed)
+        }
+    }
+    return out
+}
+
+func serverPort() string {
+    port := os.Getenv("PORT")
+    if port == "" {
+        return "8080"
+    }
+    return port
 }
