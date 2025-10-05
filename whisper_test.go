@@ -1,14 +1,15 @@
 package main
 
 import (
-	"context"
-	"fmt"
-	"os"
-	"path/filepath"
-	"testing"
-	"time"
+    "context"
+    "fmt"
+    "io"
+    "os"
+    "path/filepath"
+    "testing"
+    "time"
 
-	"github.com/openai/openai-go"
+    "github.com/openai/openai-go"
 )
 
 type mockTranscriptionClient struct {
@@ -16,12 +17,22 @@ type mockTranscriptionClient struct {
 	delays    map[string]time.Duration
 }
 
+type fileNamer interface {
+    Name() string
+}
+
 func (m *mockTranscriptionClient) CreateTranscription(ctx context.Context, params openai.AudioTranscriptionNewParams) (*openai.Transcription, error) {
-	file, ok := params.File.(interface{ Name() string })
-	if !ok {
-		return nil, fmt.Errorf("unexpected file type %T", params.File)
-	}
-	path := file.Name()
+    if params.File == nil {
+        return nil, fmt.Errorf("missing file reader")
+    }
+
+    var path string
+    if named, ok := params.File.(fileNamer); ok {
+        path = named.Name()
+    }
+    if closer, ok := params.File.(io.Seeker); ok {
+        _, _ = closer.Seek(0, io.SeekStart)
+    }
 
 	if delay, ok := m.delays[path]; ok {
 		time.Sleep(delay)

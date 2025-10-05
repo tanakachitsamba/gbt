@@ -1,14 +1,14 @@
 package main
 
 import (
-	"context"
-	"fmt"
-	"os"
-	"path/filepath"
-	"strings"
-	"sync"
+    "context"
+    "fmt"
+    "os"
+    "path/filepath"
+    "strings"
+    "sync"
 
-	"github.com/openai/openai-go"
+    "github.com/openai/openai-go"
 )
 
 type transcriptionClient interface {
@@ -26,10 +26,10 @@ func transcribeFile(c transcriptionClient, ctx context.Context, audioFile string
 	defer wg.Done()
 
 	file, err := os.Open(audioFile)
-	if err != nil {
-		results <- transcriptionResult{index: index, file: audioFile, err: err}
-		return
-	}
+    if err != nil {
+        results <- transcriptionResult{index: index, file: audioFile, err: fmt.Errorf("open audio file: %w", err)}
+        return
+    }
 	defer file.Close()
 
 	params := openai.AudioTranscriptionNewParams{
@@ -47,24 +47,24 @@ func transcribeFile(c transcriptionClient, ctx context.Context, audioFile string
 }
 
 func whisper(c transcriptionClient, ctx context.Context) ([]string, error) {
-	audioDir := "audios"
-	targetExtension := ".mp3"
+    audioDir := "audios"
+    targetExtension := ".mp3"
 
-	entries, err := os.ReadDir(audioDir)
+    entries, err := os.ReadDir(audioDir)
 	if err != nil {
 		return nil, fmt.Errorf("error reading audio directory: %w", err)
 	}
 
-	audioFiles := make([]string, 0, len(entries))
-	for _, entry := range entries {
-		if entry.IsDir() {
-			continue
-		}
-		name := entry.Name()
-		if strings.EqualFold(filepath.Ext(name), targetExtension) {
-			audioFiles = append(audioFiles, filepath.Join(audioDir, name))
-		}
-	}
+    audioFiles := make([]string, 0, len(entries))
+    for _, entry := range entries {
+        if entry.IsDir() {
+            continue
+        }
+        name := entry.Name()
+        if strings.EqualFold(filepath.Ext(name), targetExtension) {
+            audioFiles = append(audioFiles, filepath.Join(audioDir, name))
+        }
+    }
 
 	transcriptions := make([]string, len(audioFiles))
 	results := make(chan transcriptionResult, len(audioFiles))

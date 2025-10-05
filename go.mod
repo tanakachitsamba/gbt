@@ -2,6 +2,8 @@ module guava
 
 go 1.21
 
+toolchain go1.24.3
+
 require (
 	github.com/gocolly/colly v1.2.0
 	github.com/joho/godotenv v1.5.1
