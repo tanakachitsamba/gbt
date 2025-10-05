@@ -126,7 +126,7 @@ func ExampleRunAgents() {
 		},
 	}
 
-	thread, err := RunAgents(ctx, generator, agents, Input{Prompt: "Draft a release plan", Temperature: 0.7, Model: "gbt-4"})
+	thread, err := RunAgents(ctx, generator, agents, Input{Prompt: "Draft a release plan", Temperature: 0.7, Model: "gpt-4"})
 	if err != nil {
 		fmt.Println("error:", err)
 		return
