@@ -6,11 +6,18 @@ toolchain go1.24.3
 
 require (
 	github.com/gocolly/colly v1.2.0
+<<<<<<< HEAD
 	github.com/joho/godotenv v1.5.1
 	github.com/marcboeker/go-duckdb v1.4.4
 	github.com/openai/openai-go v1.12.0
 	github.com/pkoukk/tiktoken-go v0.1.8
 	github.com/pkoukk/tiktoken-go-loader v0.0.2
+=======
+	github.com/google/uuid v1.3.1
+	github.com/gorilla/mux v1.8.0
+	github.com/joho/godotenv v1.5.1
+	github.com/marcboeker/go-duckdb v1.4.4
+>>>>>>> origin/refactor-api-for-versioned-dtos-and-handlers
 	github.com/rs/cors v1.9.0
 	github.com/twilio/twilio-go v1.7.1
 )
