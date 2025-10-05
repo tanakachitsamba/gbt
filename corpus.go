@@ -1,3 +1,6 @@
+//go:build ignore
+
+//nolint:all // Experimental utilities kept for reference.
 package main
 
 // global variable of the corpus need to uploaded to a db

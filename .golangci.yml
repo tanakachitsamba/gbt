@@ -1,0 +1,9 @@
+version: 2
+
+run:
+  skip-files:
+    - duckdb\.go
+    - corpus\.go
+    - scraper\.go
+    - sms\.go
+    - whisper\.go
