@@ -2,11 +2,9 @@ package main
 
 // global variable of the corpus need to uploaded to a db
 
-// todo: to use a doc to extract
-// todo: every 4000 charectors need to added a slice along with a struct of attributes of the document
-
-func getCountOfChars(doc1 string) {
-	countChars(doc1)
+// getCountOfChars returns the number of Unicode characters in the provided document.
+func getCountOfChars(doc1 string) int {
+	return countChars(doc1)
 }
 
 func countChars(s string) int {
