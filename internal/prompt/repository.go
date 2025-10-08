@@ -232,13 +232,13 @@ func (r *DuckDBRepository) SavePromptEvaluation(ctx context.Context, record Prom
 	}
 
 	if len(record.References) > 0 {
-		stmt, prepErr := tx.PrepareContext(ctx, `
+		stmt, err := tx.PrepareContext(ctx, `
                         INSERT INTO prompt_evaluation_references (
                                 evaluation_id, context_id, topic, content, source
                         ) VALUES (?, ?, ?, ?, ?)
                 `)
-		if prepErr != nil {
-			return fmt.Errorf("prepare evaluation reference insert: %w", prepErr)
+		if err != nil {
+			return fmt.Errorf("prepare evaluation reference insert: %w", err)
 		}
 		defer stmt.Close()
 
