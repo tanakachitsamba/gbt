@@ -86,6 +86,7 @@ func (c *Client) Responses() ResponsesClient {
 // with the Responses API.
 type ResponsesClient interface {
 	CreateResponse(ctx context.Context, params responses.ResponseNewParams) (*ResponseResult, error)
+	CreateResponseWithOptions(ctx context.Context, params responses.ResponseNewParams, opts ...option.RequestOption) (*ResponseResult, error)
 	StreamResponse(ctx context.Context, params responses.ResponseNewParams) (ResponseStream, error)
 }
 
@@ -103,6 +104,14 @@ type responsesClient struct {
 
 func (c *responsesClient) CreateResponse(ctx context.Context, params responses.ResponseNewParams) (*ResponseResult, error) {
 	resp, err := c.svc.New(ctx, params)
+	if err != nil {
+		return nil, err
+	}
+	return &ResponseResult{Response: resp, OutputText: resp.OutputText()}, nil
+}
+
+func (c *responsesClient) CreateResponseWithOptions(ctx context.Context, params responses.ResponseNewParams, opts ...option.RequestOption) (*ResponseResult, error) {
+	resp, err := c.svc.New(ctx, params, opts...)
 	if err != nil {
 		return nil, err
 	}
